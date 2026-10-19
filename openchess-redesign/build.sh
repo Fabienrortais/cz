@@ -27,6 +27,7 @@ for V in ${VARIANTS:-module nodemcu}; do
   if [[ -n "$JAR" && "${2:-}" != "--no-route" ]]; then
     $PY tools/route.py "$PCB" "$JAR" --passes 30
   fi
+  $PY tools/gnd_repair.py "$PCB"
   $PY tools/drc.py "$PCB" hardware$SUF/openchess-board${SUF}_drc.rpt --save
   $PY tools/export.py
 done

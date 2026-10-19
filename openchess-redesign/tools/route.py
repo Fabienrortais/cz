@@ -40,7 +40,15 @@ def main():
     board = pcbnew.LoadBoard(path)
     n_fixed = len(list(board.GetTracks()))
     ko = add_grid_keepout(board)
+    # give the autorouter a small clearance margin over the DRC rule (Freerouting rounds)
+    ds = board.GetDesignSettings()
+    try:
+        nc = ds.m_NetSettings.m_DefaultNetClass
+    except AttributeError:
+        nc = ds.m_NetSettings.GetDefaultNetclass()
+    nc.SetClearance(MM(D.CLEARANCE + 0.06))
     ok = pcbnew.ExportSpecctraDSN(board, dsn)
+    nc.SetClearance(MM(D.CLEARANCE))
     print("DSN export:", ok, dsn, "fixed tracks/vias:", n_fixed)
     txt = open(dsn).read()
     print("DSN classes:", re.findall(r"\(class (\S+)", txt)[:5], "| fixed wires:", txt.count("(type fix)"), "| protect:", txt.count("(type protect)"))
@@ -76,11 +84,28 @@ def cleanup_dangling(board):
                 for p in (t.GetStart(), t.GetEnd()):
                     pts.setdefault((p.x, p.y, t.GetLayer()), []).append(t)
         pads = [(pad, pad.GetLayerSet()) for fp in board.GetFootprints() for pad in fp.Pads()]
+        segs = [t for t in tracks if t.GetClass() == "PCB_TRACK"]
+        def on_segment(p, s):
+            a, b = s.GetStart(), s.GetEnd()
+            bb = s.GetBoundingBox()
+            if not (bb.GetLeft() - 1000 <= p.x <= bb.GetRight() + 1000 and bb.GetTop() - 1000 <= p.y <= bb.GetBottom() + 1000):
+                return False
+            ax, ay, bx, by = a.x, a.y, b.x, b.y
+            dx, dy = bx - ax, by - ay
+            L2 = dx * dx + dy * dy
+            if L2 == 0:
+                return False
+            u = max(0.0, min(1.0, ((p.x - ax) * dx + (p.y - ay) * dy) / L2))
+            qx, qy = ax + u * dx, ay + u * dy
+            return ((p.x - qx) ** 2 + (p.y - qy) ** 2) ** 0.5 <= s.GetWidth() / 2 + 1000
         def anchored(p, layer, me):
             if len([x for x in pts.get((p.x, p.y, layer), []) if x is not me]) > 0:
                 return True
             for pad, ls in pads:
                 if ls.Contains(layer) and pad.HitTest(p):
+                    return True
+            for s in segs:                       # T-junction onto another segment of the same layer
+                if s is not me and s.GetLayer() == layer and on_segment(p, s):
                     return True
             return False
         victims = [t for t in tracks if t.GetClass() == "PCB_TRACK" and not t.IsLocked()

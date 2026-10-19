@@ -378,7 +378,8 @@ def build(out_path):
         B.rule_area(ant, [F, Bk], "antenna_keepout")
     else:   # no pour under the dev board's antenna end (tracks to the end pins are allowed)
         y0 = Ys + D.DEV_Y0_OFFSET
-        ant = [(0.0, y0 - 2.5), (D.DEV_X0 + 9.0, y0 - 2.5), (D.DEV_X0 + 9.0, y0 + D.DEV_ROW_SPACING + 2.5), (0.0, y0 + D.DEV_ROW_SPACING + 2.5)]
+        # (KiCad exports every rule area as a router keepout, so keep it clear of the end pins' escape path)
+        ant = [(0.0, y0 + 2.0), (D.DEV_X0 + 8.0, y0 + 2.0), (D.DEV_X0 + 8.0, y0 + D.DEV_ROW_SPACING - 2.0), (0.0, y0 + D.DEV_ROW_SPACING - 2.0)]
         B.rule_area(ant, [F, Bk], "devboard_antenna_nopour", tracks=False, vias=False, pour=True)
 
     # ------------------------------------------------------- GND stitching vias
