@@ -29,7 +29,10 @@ class Builder:
         ds.m_HoleToHoleMin = MM(0.5)
         ds.m_SolderMaskMinWidth = MM(0.0)
         ds.m_SolderMaskExpansion = MM(0.0)
-        nc = ds.m_NetSettings.m_DefaultNetClass
+        try:                                   # KiCad 7/8
+            nc = ds.m_NetSettings.m_DefaultNetClass
+        except AttributeError:                 # KiCad 9/10
+            nc = ds.m_NetSettings.GetDefaultNetclass()
         nc.SetClearance(MM(D.CLEARANCE)); nc.SetTrackWidth(MM(D.W_SIG))
         nc.SetViaDiameter(MM(D.VIA_D)); nc.SetViaDrill(MM(D.VIA_DRILL))
         ds.SetBoardThickness(MM(1.6))
@@ -128,7 +131,7 @@ class Builder:
         z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
         ls = pcbnew.LSET()
         for l in layers:
-            ls.addLayer(l)
+            (ls.addLayer if hasattr(ls, "addLayer") else ls.AddLayer)(l)
         z.SetLayerSet(ls)
         ol = z.Outline(); ol.NewOutline()
         for x, y in pts:

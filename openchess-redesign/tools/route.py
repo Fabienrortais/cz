@@ -20,7 +20,7 @@ def add_grid_keepout(board):
     z.SetIsRuleArea(True); z.SetZoneName("TEMP_autoroute_keepout")
     z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(True); z.SetDoNotAllowCopperPour(False)
     z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
-    ls = pcbnew.LSET(); ls.addLayer(pcbnew.F_Cu); ls.addLayer(pcbnew.B_Cu); z.SetLayerSet(ls)
+    ls = pcbnew.LSET(); add = ls.addLayer if hasattr(ls, "addLayer") else ls.AddLayer; add(pcbnew.F_Cu); add(pcbnew.B_Cu); z.SetLayerSet(ls)
     ol = z.Outline(); ol.NewOutline()
     for x, y in pts:
         ol.Append(MM(x), MM(y))

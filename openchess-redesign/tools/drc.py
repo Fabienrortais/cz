@@ -6,9 +6,18 @@ def run(path, report=None, save=False):
     filler = pcbnew.ZONE_FILLER(board)
     filler.Fill(board.Zones())
     report = report or path.replace(".kicad_pcb", "_drc.rpt")
-    pcbnew.WriteDRCReport(board, report, pcbnew.EDA_UNITS_MILLIMETRES, True)
     if save:
         pcbnew.SaveBoard(path, board)
+    import subprocess, shutil
+    cli_ok = False
+    if shutil.which("kicad-cli"):
+        r = subprocess.run(["kicad-cli", "pcb", "drc", "--help"], capture_output=True, text=True)
+        cli_ok = r.returncode == 0
+    if cli_ok:   # KiCad 8/9/10
+        subprocess.run(["kicad-cli", "pcb", "drc", "--format", "report", "--units", "mm", "--all-track-errors",
+                        "--schematic-parity", "-o", report, path], check=False)
+    else:        # KiCad 7
+        pcbnew.WriteDRCReport(board, report, pcbnew.EDA_UNITS_MILLIMETRES, True)
     txt = open(report).read()
     kinds = collections.Counter(re.findall(r"^\[(\w+)\]", txt, re.M))
     found = re.findall(r"\*\* Found (\d+) ([^*]+?) \*\*", txt)

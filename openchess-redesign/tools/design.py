@@ -62,8 +62,28 @@ GPIO = dict(
     ROW=["IO4", "IO16", "IO17", "IO18", "IO19", "IO21", "IO22", "IO23"],
 )
 
-FP_LIB = "/usr/share/kicad/footprints"
-SYM_LIB = "/usr/share/kicad/symbols"
+import os as _os
+
+def _kicad_share(kind):
+    """Locate the KiCad symbol/footprint libraries for whatever KiCad version is installed."""
+    env = _os.environ.get(f"KICAD_{kind.upper()}_DIR")
+    if env:
+        return env
+    for v in ("10", "9", "8", "7"):
+        env = _os.environ.get(f"KICAD{v}_{kind.upper()}_DIR")
+        if env and _os.path.isdir(env):
+            return env
+    sub = "footprints" if kind == "footprint" else "symbols"
+    for base in ("/usr/share/kicad", "/usr/local/share/kicad",
+                 "/Applications/KiCad/KiCad.app/Contents/SharedSupport",
+                 "C:/Program Files/KiCad/10.0/share/kicad", "C:/Program Files/KiCad/9.0/share/kicad",
+                 "C:/Program Files/KiCad/8.0/share/kicad", "C:/Program Files/KiCad/7.0/share/kicad"):
+        if _os.path.isdir(_os.path.join(base, sub)):
+            return _os.path.join(base, sub)
+    raise RuntimeError(f"KiCad {sub} library not found; set KICAD_{kind.upper()}_DIR")
+
+FP_LIB = _kicad_share("footprint")
+SYM_LIB = _kicad_share("symbol")
 
 
 @dataclass

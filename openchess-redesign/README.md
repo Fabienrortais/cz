@@ -45,12 +45,19 @@ openchess-redesign/
 ## Regenerating / changing the design
 
 Everything is generated from `tools/design.py` (parts, nets, placement) by
-Python scripts that drive KiCad's `pcbnew` module and `kicad-cli` (KiCad 7).
+Python scripts that drive KiCad's `pcbnew` module and `kicad-cli`.
+
+KiCad versions: the files were produced with KiCad 7.0.11 (the version
+installable in the build container) and use the KiCad 7 file format, which
+KiCad 8, 9 and 10 open directly and migrate on save. The scripts detect the
+installed version (library paths, API differences, `kicad-cli pcb drc` on 8+)
+so you can rebuild with your current KiCad 10 install; the first save from
+KiCad 10 will convert the project to the KiCad 10 format.
 The matrix routing is scripted; only the controller strip is auto-routed with
 Freerouting.
 
 ```sh
-sudo apt install kicad kicad-symbols kicad-footprints xvfb default-jre
+sudo apt install kicad kicad-symbols kicad-footprints xvfb default-jre   # or any KiCad 8/9/10 install
 # Freerouting 1.9.0 jar from https://github.com/freerouting/freerouting/releases
 ./build.sh /path/to/freerouting.jar
 ```
