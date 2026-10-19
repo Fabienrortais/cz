@@ -29,7 +29,17 @@ def free_spot(board, x, y, keep=0.3):
                 return False
     for t in board.GetTracks():
         bb = t.GetBoundingBox()
-        if bb.GetLeft() - r < px < bb.GetRight() + r and bb.GetTop() - r < py < bb.GetBottom() + r:
+        if not (bb.GetLeft() - r < px < bb.GetRight() + r and bb.GetTop() - r < py < bb.GetBottom() + r):
+            continue
+        if t.GetClass() == "PCB_VIA":
+            return False
+        # exact point-to-segment distance (bounding boxes of diagonal tracks are far too pessimistic)
+        a, b_ = t.GetStart(), t.GetEnd()
+        dx, dy = b_.x - a.x, b_.y - a.y
+        L2 = dx * dx + dy * dy
+        u = 0.0 if L2 == 0 else max(0.0, min(1.0, ((px - a.x) * dx + (py - a.y) * dy) / L2))
+        qx, qy = a.x + u * dx, a.y + u * dy
+        if ((px - qx) ** 2 + (py - qy) ** 2) ** 0.5 < t.GetWidth() / 2 + MM(D.VIA_D / 2 + keep):
             return False
     for z in board.Zones():
         if z.GetIsRuleArea() and z.GetDoNotAllowVias() and z.Outline().Contains(pcbnew.VECTOR2I(px, py)):
@@ -97,8 +107,12 @@ def main():
                 return has_pad
         return None          # not in any pour piece
     removed = 0
+    anchored = set()      # vias that a track ends on (pre-placed pad stubs) are never orphans
+    for tr in board.GetTracks():
+        if tr.GetClass() == "PCB_TRACK":
+            anchored.add((tr.GetStart().x, tr.GetStart().y)); anchored.add((tr.GetEnd().x, tr.GetEnd().y))
     for v in list(board.GetTracks()):
-        if v.GetClass() == "PCB_VIA" and v.GetNetCode() == gnd:
+        if v.GetClass() == "PCB_VIA" and v.GetNetCode() == gnd and (v.GetPosition().x, v.GetPosition().y) not in anchored:
             f, b_ = piece_has_pad(pcbnew.F_Cu, v.GetPosition()), piece_has_pad(pcbnew.B_Cu, v.GetPosition())
             if not f and not b_:
                 board.Remove(v); removed += 1

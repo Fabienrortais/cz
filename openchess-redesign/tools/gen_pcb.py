@@ -407,6 +407,20 @@ def build(out_path):
                 B.track(gx, gy, vx, vy, F, 0.3, "GND"); B.via(vx, vy, "GND")
                 break
 
+    # ESP32 module: tie its GND pins to the thermal pad under the module body (the router cannot block that),
+    # and chain the two decoupling caps' GND pads into pin 1 so they never sit on a pour island.
+    if D.VARIANT == "module":
+        tp = [B.pad("U1", "39")]   # first "39" sub-pad is fine: all 39 pads are one copper area
+        tx, ty = tp[0]
+        p1 = B.pad("U1", "1"); p38 = B.pad("U1", "38"); p15 = B.pad("U1", "15")
+        B.poly([p1, (tx + 1.0, p1[1]), (tx + 1.0, ty)], F, 0.4, "GND")
+        B.poly([p38, (tx - 2.4, p38[1]), (tx - 2.4, ty)], F, 0.4, "GND")
+        B.poly([p15, (p15[0], ty - 3.0), (tx, ty)], F, 0.4, "GND")
+        c66 = B.pad("C66", "2"); c67 = B.pad("C67", "2")
+        xs = p1[0] + 4.5
+        B.poly([c67, (xs, c67[1]), (xs, c66[1]), c66], F, 0.3, "GND")
+        B.poly([(xs, c66[1]), (xs, p1[1]), p1], F, 0.3, "GND")
+
     # 74HCT595 OE pin (GND) sits in a pad row the router tends to box in: give it its own via before routing
     px, py = B.pad("U4", "13")
     B.track(px, py, px, py - 2.6, F, 0.3, "GND"); B.via(px, py - 2.6, "GND")
