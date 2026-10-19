@@ -19,3 +19,12 @@ Caused by: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonEl
 	at app.freerouting.management.VersionChecker.processResponse(VersionChecker.java:39)
 	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:718)
 	... 9 more
+2026-10-19 21:03:29.539 [Thread-22] INFO  Starting auto-routing...
+2026-10-19 21:03:30.949 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:32.433 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:33.452 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:35.041 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:36.015 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:37.505 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:38.430 [Thread-22] WARN  FloatLine: Parameter is null
+2026-10-19 21:03:39.375 [Thread-22] WARN  FloatLine: Parameter is null
