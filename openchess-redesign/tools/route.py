@@ -45,8 +45,13 @@ def main():
     txt = open(dsn).read()
     print("DSN classes:", re.findall(r"\(class (\S+)", txt)[:5], "| fixed wires:", txt.count("(type fix)"), "| protect:", txt.count("(type protect)"))
 
-    if os.path.exists(ses):
-        os.remove(ses)
+    if "--import-only" not in sys.argv:
+        if os.path.exists(ses):
+            os.remove(ses)
+        run_freerouting(jar, dsn, ses, passes, work)
+    import_session(board, ses, ko, path)
+
+def run_freerouting(jar, dsn, ses, passes, work):
     cmd = ["xvfb-run", "-a", "java", "-jar", jar, "-de", dsn, "-do", ses, "-mp", passes, "-oit", "2", "-mt", "1"]
     t0 = time.time()
     log = open(os.path.join(work, "freerouting.log"), "w")
@@ -57,10 +62,41 @@ def main():
         print(open(os.path.join(work, "freerouting.log")).read()[-3000:])
         sys.exit(1)
 
+def cleanup_dangling(board):
+    """Delete unlocked track segments with a free end (autorouter leftovers). Repeats until stable."""
+    removed = 0
+    while True:
+        tracks = [t for t in board.GetTracks()]
+        pts = {}
+        for t in tracks:
+            if t.GetClass() == "PCB_VIA":
+                for l in (pcbnew.F_Cu, pcbnew.B_Cu):
+                    pts.setdefault((t.GetPosition().x, t.GetPosition().y, l), []).append(t)
+            else:
+                for p in (t.GetStart(), t.GetEnd()):
+                    pts.setdefault((p.x, p.y, t.GetLayer()), []).append(t)
+        pads = [(pad, pad.GetLayerSet()) for fp in board.GetFootprints() for pad in fp.Pads()]
+        def anchored(p, layer, me):
+            if len([x for x in pts.get((p.x, p.y, layer), []) if x is not me]) > 0:
+                return True
+            for pad, ls in pads:
+                if ls.Contains(layer) and pad.HitTest(p):
+                    return True
+            return False
+        victims = [t for t in tracks if t.GetClass() == "PCB_TRACK" and not t.IsLocked()
+                   and (not anchored(t.GetStart(), t.GetLayer(), t) or not anchored(t.GetEnd(), t.GetLayer(), t))]
+        if not victims:
+            return removed
+        for t in victims:
+            board.Remove(t); removed += 1
+
+def import_session(board, ses, ko, path):
     # import the session into the board that still has the keepout, then drop the keepout
-    ok = pcbnew.ImportSpecctraSES(board, ses)
-    print("SES import:", ok, "tracks/vias now:", len(list(board.GetTracks())))
+    from ses_import import import_ses     # KiCad's importer is GUI-only in KiCad 7; use our own
+    n_t, n_v = import_ses(board, ses)
+    print("SES import: added", n_t, "tracks and", n_v, "vias; tracks/vias now:", len(list(board.GetTracks())))
     board.Remove(ko)
+    print("removed dangling tails:", cleanup_dangling(board))
     # Re-lock nothing; keep everything as routed. Fill zones and save.
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
     pcbnew.SaveBoard(path, board)

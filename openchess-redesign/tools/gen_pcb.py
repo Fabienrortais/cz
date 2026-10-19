@@ -81,9 +81,9 @@ class Builder:
         # reference text: smaller for the matrix parts
         if p.ref[0] in "HDC" and p.ref[1:].isdigit() and int(p.ref[1:]) <= 64:
             fp.Reference().SetVisible(False)
-        if p.ref == "U1":
+        if p.ref in ("U1", "J1"):   # solid zone connection: ESP32 thermal pad, USB-C 0.5 mm GND pads
             for pad in fp.Pads():
-                if pad.GetNumber() == "39":
+                if p.pins.get(pad.GetNumber()) == "GND":
                     pad.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
         if not p.pins:  # mounting holes
             fp.Reference().SetVisible(False)
@@ -147,6 +147,29 @@ class Builder:
             ol.Append(MM(x), MM(y))
         self.b.Add(z)
         return z
+
+    def stitch_grid(self, xs, ys, net, exclude=None, keep=0.5):
+        """Add vias on a grid wherever they are at least `keep` mm away from every pad/track/via."""
+        items = []
+        for fp in self.b.GetFootprints():
+            for pad in fp.Pads():
+                items.append(pad.GetBoundingBox())
+        for tr in self.b.GetTracks():
+            items.append(tr.GetBoundingBox())
+        r = MM(D.VIA_D / 2 + keep)
+        n = 0
+        for x in xs:
+            for y in ys:
+                if exclude and exclude(x, y):
+                    continue
+                px, py = MM(x), MM(y)
+                ok = True
+                for bb in items:
+                    if bb.GetLeft() - r < px < bb.GetRight() + r and bb.GetTop() - r < py < bb.GetBottom() + r:
+                        ok = False; break
+                if ok:
+                    self.via(x, y, net); n += 1
+        return n
 
     # --- graphics -----------------------------------------------------------
     def rect_edge(self, x1, y1, x2, y2):
@@ -239,11 +262,11 @@ def build(out_path):
         qc = B.pad(f"Q{f+1}", "3")
         B.track(colx, Ys - 1.5, qc[0], qc[1], F, D.W_COL, f"COL{f}")
         busx = cx8 + D.BUS_DX
-        B.track(busx, cy8 + 4.0, busx, Ys + 2.0, Bk, D.W_BUS, "+5V")
+        B.track(busx, cy8 + 5.5, busx, Ys + 2.0, Bk, D.W_BUS, "+5V")   # rank 8 LED via is at cy+5.5
 
     # main +5V bus (B.Cu) along the top of the strip, plus power-entry trace
     cxa, _ = D.sq_center(0, 0); cxh, _ = D.sq_center(7, 0)
-    B.track(22.0, Ys + 2.0, cxh + D.BUS_DX + 1.0, Ys + 2.0, Bk, D.W_MAINBUS, "+5V")
+    B.track(cxa + D.COL_DX + 0.95, Ys + 2.0, cxh + D.BUS_DX, Ys + 2.0, Bk, D.W_MAINBUS, "+5V")   # from Q1 emitter via to the h bus
     # power entry: B.Cu 3 mm from the bus down to 3 vias, then F.Cu bar to the fuse (+5V side)
     B.track(99.0, Ys + 2.0, 99.0, Ys + 26.5, Bk, 3.0, "+5V")
     for vx in (97.5, 99.0, 100.5):
@@ -251,13 +274,34 @@ def build(out_path):
     f2 = B.pad("F1", "2"); f1 = B.pad("F1", "1")
     B.track(97.5, Ys + 26.5, 100.5, Ys + 26.5, F, 1.5, "+5V")
     B.track(99.0, Ys + 26.5, f2[0], f2[1], F, 1.5, "+5V")
-    # USB VBUS pads -> fuse (VBUS side), 0.8 mm, running just above the connector pad row
+    # USB VBUS: thin stubs out of the 0.5 mm pad row, then a 0.8 mm B.Cu run under the connector to the fuse.
     vb = sorted({round(B.pad("J1", n)[0], 3) for n in ("A4", "A9", "B4", "B9")})
     vy = B.pad("J1", "A4")[1]
+    vyr = Ys + 32.6
     for vx in vb:
-        B.track(vx, vy, vx, Ys + 32.6, F, 0.28, "VBUS")
-    B.track(vb[0], Ys + 32.6, f1[0], Ys + 32.6, F, 0.8, "VBUS")
-    B.track(f1[0], Ys + 32.6, f1[0], f1[1], F, 0.8, "VBUS")
+        B.track(vx, vy, vx, vyr, F, 0.28, "VBUS")
+    B.track(vb[0], vyr, vb[0] - 2.55, vyr, F, 0.3, "VBUS"); B.via(vb[0] - 2.55, vyr, "VBUS", 0.8, 0.4)
+    B.track(vb[1], vyr, vb[1] + 1.75, vyr, F, 0.3, "VBUS"); B.via(vb[1] + 1.75, vyr, "VBUS", 0.8, 0.4)
+    B.track(vb[0] - 2.55, vyr, f1[0] - 1.5, vyr, Bk, 0.8, "VBUS"); B.via(f1[0] - 1.5, vyr, "VBUS", 0.8, 0.4)
+    B.track(f1[0] - 1.5, vyr, f1[0], f1[1], F, 0.8, "VBUS")
+    # USB signal escape: 0.2 mm stubs straight up, fan out to 1.3 mm pitch; D-/D+ pad pairs are interleaved,
+    # so the D- pair is bridged on B.Cu and the D+ pair on F.Cu above it.
+    sig = [("A5", "CC1"), ("B7", "USB_D-"), ("A6", "USB_D+"), ("A7", "USB_D-"), ("B6", "USB_D+"), ("B5", "CC2")]
+    fan = [74.3, 75.6, 76.9, 78.2, 79.5, 80.8]
+    ends = {}
+    for (pn, net), fx in zip(sig, fan):
+        px, py = B.pad("J1", pn)
+        B.poly([(px, py), (px, Ys + 31.5), (fx, Ys + 27.5)], F, 0.2, net)
+        ends.setdefault(net, []).append(fx)
+    dm = ends["USB_D-"]; dp = ends["USB_D+"]
+    for fx in dm:
+        B.track(fx, Ys + 27.5, fx, Ys + 26.5, F, 0.2, "USB_D-"); B.via(fx, Ys + 26.5, "USB_D-")
+    B.track(dm[0], Ys + 26.5, dm[1], Ys + 26.5, Bk, 0.3, "USB_D-")
+    B.track(dm[1], Ys + 26.5, dm[1], Ys + 24.5, Bk, 0.3, "USB_D-")
+    for fx in dp:
+        B.track(fx, Ys + 27.5, fx, Ys + 25.0, F, 0.2, "USB_D+")
+    B.track(dp[0], Ys + 25.0, dp[1], Ys + 25.0, F, 0.3, "USB_D+")
+    B.track(dp[1], Ys + 25.0, dp[1], Ys + 24.0, F, 0.3, "USB_D+")
     # external 5V input J2 -> +5V (fuse output side)
     j2 = B.pad("J2", "1")
     B.poly([j2, (j2[0], f2[1]), f2], F, 1.0, "+5V")
@@ -322,12 +366,14 @@ def build(out_path):
             B.via(D.GRID_X0 + D.PITCH * i, D.GRID_Y0 + D.PITCH * j, "GND")
     for f in range(8):
         cx, _ = D.sq_center(f, 0)
-        B.via(cx + 12.0, Ys + 16.3, "GND")
+        B.via(cx + 15.0, Ys + 16.3, "GND")
         B.via(cx, 4.0, "GND")
     for x in (66, 90, 108, 150, 190, 210, 230, 250, 270, 290, 310):
         B.via(x, Ys + 39.5, "GND")
     for y in range(40, int(Ys) - 20, 40):
         B.via(W - 5.0, y + 20, "GND")
+    B.stitch_grid([x for x in range(30, int(W) - 8, 6)], [Ys + 17.5 + 5.5 * k for k in range(5)], "GND",
+                  exclude=lambda x, y: (x < 42 and y > Ys + 12) or (x < 40 and y > Ys + 33))
 
     # -------------------------------------------------------------- silkscreen
     for r in range(8):

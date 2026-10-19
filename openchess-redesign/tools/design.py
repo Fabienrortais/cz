@@ -212,9 +212,9 @@ def build_parts() -> List[Part]:
                         "B7": "USB_D-", "B8": "NC_SBU2", "B9": "VBUS", "B12": "GND", "S1": "GND"},
                   x=78.0, y=BOARD_H - 3.9, rot=0, lcsc="C165948", mpn="TYPE-C-31-M-12", desc="USB-C receptacle 16P"))
     P.append(Part(ref="R17", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="5.1k",
-                  pins={"1": "CC1", "2": "GND"}, x=76.0, y=Ys + 30.0, rot=0, lcsc="C23186", desc="USB CC1 pull-down"))
+                  pins={"1": "CC1", "2": "GND"}, x=70.0, y=Ys + 34.0, rot=0, lcsc="C23186", desc="USB CC1 pull-down"))
     P.append(Part(ref="R18", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="5.1k",
-                  pins={"1": "CC2", "2": "GND"}, x=80.0, y=Ys + 30.0, rot=0, lcsc="C23186", desc="USB CC2 pull-down"))
+                  pins={"1": "CC2", "2": "GND"}, x=87.0, y=Ys + 34.0, rot=0, lcsc="C23186", desc="USB CC2 pull-down"))
     P.append(Part(ref="F1", symbol="Device:Polyfuse", footprint="Fuse:Fuse_1812_4532Metric", value="3A PTC",
                   pins={"1": "VBUS", "2": "+5V"}, x=99.0, y=Ys + 31.0, rot=90, lcsc="", mpn="MF-MSMF300-2 / BSMD1812-300",
                   desc="Resettable fuse 3A hold (USB path)"))
@@ -244,11 +244,11 @@ def build_parts() -> List[Part]:
                   pins={"1": "GND", "2": "TXD0_U", "3": "RXD0_U", "4": "CH_V3", "5": "USB_D+", "6": "USB_D-", "7": "NC_U3_7",
                         "8": "NC_U3_8", "9": "NC_U3_9", "10": "NC_U3_10", "11": "NC_U3_11", "12": "NC_U3_12",
                         "13": "DTR", "14": "RTS", "15": "NC_U3_15", "16": "+5V"},
-                  x=78.0, y=Ys + 22.0, rot=90, lcsc="C84681", mpn="CH340C", desc="USB to UART (no crystal needed)"))
+                  x=78.0, y=Ys + 20.0, rot=90, lcsc="C84681", mpn="CH340C", desc="USB to UART (no crystal needed)"))
     P.append(Part(ref="C71", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
-                  pins={"1": "+5V", "2": "GND"}, x=70.0, y=Ys + 17.0, rot=0, lcsc="C14663", desc="CH340 VCC decoupling"))
+                  pins={"1": "+5V", "2": "GND"}, x=70.0, y=Ys + 16.0, rot=0, lcsc="C14663", desc="CH340 VCC decoupling"))
     P.append(Part(ref="C72", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
-                  pins={"1": "CH_V3", "2": "GND"}, x=86.0, y=Ys + 17.0, rot=0, lcsc="C14663", desc="CH340 V3 decoupling"))
+                  pins={"1": "CH_V3", "2": "GND"}, x=86.0, y=Ys + 16.0, rot=0, lcsc="C14663", desc="CH340 V3 decoupling"))
     P.append(Part(ref="Q9", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
                   pins={"1": "DTR_R", "2": "RTS", "3": "EN"}, x=66.0, y=Ys + 26.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-reset"))
     P.append(Part(ref="Q10", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
