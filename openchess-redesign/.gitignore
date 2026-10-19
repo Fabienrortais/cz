@@ -1,0 +1,7 @@
+build/*.dsn
+build/*.ses
+build/*.log
+build/netlist.xml
+hardware/*-backups/
+hardware/fp-info-cache
+*.kicad_prl
