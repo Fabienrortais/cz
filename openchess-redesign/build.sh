@@ -15,11 +15,18 @@ fi
 [[ -n "$PY" ]] || { echo "no python with the pcbnew module found; set PYTHON=..."; exit 1; }
 echo "using $PY ($($PY -c 'import pcbnew; print(pcbnew.GetBuildVersion())'))"
 JAR=${1:-}
-$PY tools/gen_sch.py
-$PY tools/verify_netlist.py hardware/openchess-board.kicad_sch build/netlist.xml
-$PY tools/gen_pcb.py
-if [[ -n "$JAR" && "${2:-}" != "--no-route" ]]; then
-  $PY tools/route.py hardware/openchess-board.kicad_pcb "$JAR" --passes 30
-fi
-$PY tools/drc.py hardware/openchess-board.kicad_pcb hardware/openchess-board_drc.rpt --save
-$PY tools/export.py
+for V in ${VARIANTS:-module nodemcu}; do
+  export OPENCHESS_VARIANT=$V
+  SUF=""; [[ "$V" != "module" ]] && SUF="-$V"
+  PCB=hardware$SUF/openchess-board$SUF.kicad_pcb
+  echo "=== variant $V ==="
+  mkdir -p build/$V
+  $PY tools/gen_sch.py
+  $PY tools/verify_netlist.py hardware$SUF/openchess-board$SUF.kicad_sch build/$V/netlist.xml
+  $PY tools/gen_pcb.py
+  if [[ -n "$JAR" && "${2:-}" != "--no-route" ]]; then
+    $PY tools/route.py "$PCB" "$JAR" --passes 30
+  fi
+  $PY tools/drc.py "$PCB" hardware$SUF/openchess-board${SUF}_drc.rpt --save
+  $PY tools/export.py
+done

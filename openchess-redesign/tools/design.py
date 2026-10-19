@@ -16,9 +16,26 @@ from typing import Dict, List, Optional, Tuple
 # ----------------------------------------------------------------------------
 # Board parameters (edit these and re-run the build to regenerate everything)
 # ----------------------------------------------------------------------------
+import os as _os
+# VARIANT "module"  : ESP32-WROOM-32E soldered on the board + CH340C USB-UART + LDO (fully assembled board)
+# VARIANT "nodemcu" : two 19-pin sockets for a plug-in 38-pin dev board (NodeMCU-32S, ESP32 DevKitC V4, ...)
+VARIANT = _os.environ.get("OPENCHESS_VARIANT", "module")
+PROJECT = "openchess-board" + ("" if VARIANT == "module" else "-" + VARIANT)
+OUT_SUFFIX = "" if VARIANT == "module" else "-" + VARIANT
+
 PITCH = 40.0        # square pitch in mm (upstream OpenChess uses 33.33 mm, 30 LED/m strip)
 MARGIN = 10.0       # copper-free-ish margin around the 8x8 grid
-STRIP_H = 42.0      # controller strip height below rank 1
+STRIP_H = 42.0 if VARIANT == "module" else 56.0   # controller strip height below rank 1
+
+# Plug-in dev board (nodemcu variant): antenna end at the left, USB end to the right.
+DEV_ROW_SPACING = 22.86   # mm between the two pin rows. NodeMCU-32S: 22.86 (0.9"), ESP32-DevKitC V4: 25.4 (1.0") - MEASURE YOURS
+DEV_X0 = 5.0              # x of the first (antenna-end) pin
+DEV_Y0_OFFSET = 19.0      # top pin row, offset from the top of the strip
+# 38-pin order (top view, antenna up, USB down): left column top->bottom, right column top->bottom
+DEV_LEFT = ["+3V3", "NC_EN", "NC_VP", "NC_VN", "NC_IO34", "NC_IO35", "IO32", "IO33", "NC_IO25", "IO26", "NC_IO27",
+            "IO14", "NC_IO12", "GND", "NC_IO13", "NC_SD2", "NC_SD3", "NC_CMD", "+5V"]
+DEV_RIGHT = ["GND", "IO23", "IO22", "NC_TX0", "NC_RX0", "IO21", "GND", "IO19", "IO18", "NC_IO5", "IO17", "IO16",
+             "IO4", "NC_IO0", "NC_IO2", "NC_IO15", "NC_SD1", "NC_SD0", "NC_CLK"]
 GRID_X0 = MARGIN    # left edge of square a
 GRID_Y0 = MARGIN    # top edge of rank 8
 BOARD_W = 8 * PITCH + 2 * MARGIN
@@ -61,8 +78,6 @@ GPIO = dict(
     LED_DATA="IO32", SR_SER="IO33", SR_CLK="IO14", SR_LATCH="IO26",
     ROW=["IO4", "IO16", "IO17", "IO18", "IO19", "IO21", "IO22", "IO23"],
 )
-
-import os as _os
 
 def _kicad_share(kind):
     """Locate the KiCad symbol/footprint libraries for whatever KiCad version is installed."""
@@ -161,38 +176,79 @@ def build_parts() -> List[Part]:
             extra=dict(square=(f, r), chain=k, led_cap=True)))
 
     # ---------------- Controller strip ---------------------------------------
-    # ESP32 module, antenna pointing down and overhanging the bottom edge.
-    esp_pins = {
-        "1": "GND", "2": "+3V3", "3": "EN", "4": "NC_VP", "5": "NC_VN", "6": "NC_IO34", "7": "NC_IO35",
-        "8": "IO32", "9": "IO33", "10": "NC_IO25", "11": "IO26", "12": "NC_IO27", "13": "IO14",
-        "14": "NC_IO12", "15": "GND", "16": "NC_IO13", "17": "NC17", "18": "NC18", "19": "NC19",
-        "20": "NC20", "21": "NC21", "22": "NC22", "23": "NC_IO15", "24": "NC_IO2", "25": "IO0",
-        "26": "IO4", "27": "IO16", "28": "IO17", "29": "NC_IO5", "30": "IO18", "31": "IO19",
-        "32": "NC32", "33": "IO21", "34": "RXD0", "35": "TXD0", "36": "IO22", "37": "IO23",
-        "38": "GND", "39": "GND",
-    }
-    P.append(Part(ref="U1", symbol="RF_Module:ESP32-WROOM-32E", footprint="RF_Module:ESP32-WROOM-32",
-                  value="ESP32-WROOM-32E", pins=esp_pins, x=16.0, y=Ys + 24.0, rot=180,
-                  lcsc="C701341", mpn="ESP32-WROOM-32E-N4", desc="ESP32 WiFi/BLE module (4 MB flash)"))
-    P.append(Part(ref="C65", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="10uF",
-                  pins={"1": "+3V3", "2": "GND"}, x=36.0, y=Ys + 18.0, rot=90, lcsc="C15850", desc="ESP32 3V3 bulk"))
-    P.append(Part(ref="C66", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
-                  pins={"1": "+3V3", "2": "GND"}, x=31.0, y=Ys + 30.0, rot=90, lcsc="C14663", desc="ESP32 3V3 decoupling"))
-    P.append(Part(ref="R19", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
-                  pins={"1": "+3V3", "2": "EN"}, x=31.0, y=Ys + 18.0, rot=90, lcsc="C25804", desc="EN pull-up"))
-    P.append(Part(ref="C67", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="1uF",
-                  pins={"1": "EN", "2": "GND"}, x=31.0, y=Ys + 22.0, rot=90, lcsc="C15849", desc="EN reset delay"))
-    P.append(Part(ref="R20", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
-                  pins={"1": "+3V3", "2": "IO0"}, x=31.0, y=Ys + 26.0, rot=90, lcsc="C25804", desc="IO0 pull-up"))
-    P.append(Part(ref="SW1", symbol="Switch:SW_Push", footprint="Button_Switch_SMD:SW_SPST_TL3342", value="RESET",
-                  pins={"1": "EN", "2": "GND"}, x=56.0, y=Ys + 36.0, rot=0, lcsc="C318884", mpn="TS-1187A-B-A-B", desc="Reset button"))
-    P.append(Part(ref="SW2", symbol="Switch:SW_Push", footprint="Button_Switch_SMD:SW_SPST_TL3342", value="BOOT",
-                  pins={"1": "IO0", "2": "GND"}, x=46.0, y=Ys + 36.0, rot=0, lcsc="C318884", mpn="TS-1187A-B-A-B", desc="Boot button"))
+    H = BOARD_H
+    if VARIANT == "module":
+        esp_pins = {
+            "1": "GND", "2": "+3V3", "3": "EN", "4": "NC_VP", "5": "NC_VN", "6": "NC_IO34", "7": "NC_IO35",
+            "8": "IO32", "9": "IO33", "10": "NC_IO25", "11": "IO26", "12": "NC_IO27", "13": "IO14",
+            "14": "NC_IO12", "15": "GND", "16": "NC_IO13", "17": "NC17", "18": "NC18", "19": "NC19",
+            "20": "NC20", "21": "NC21", "22": "NC22", "23": "NC_IO15", "24": "NC_IO2", "25": "IO0",
+            "26": "IO4", "27": "IO16", "28": "IO17", "29": "NC_IO5", "30": "IO18", "31": "IO19",
+            "32": "NC32", "33": "IO21", "34": "RXD0", "35": "TXD0", "36": "IO22", "37": "IO23",
+            "38": "GND", "39": "GND",
+        }
+        P.append(Part(ref="U1", symbol="RF_Module:ESP32-WROOM-32E", footprint="RF_Module:ESP32-WROOM-32",
+                      value="ESP32-WROOM-32E", pins=esp_pins, x=16.0, y=Ys + 24.0, rot=180,
+                      lcsc="C701341", mpn="ESP32-WROOM-32E-N4", desc="ESP32 WiFi/BLE module (4 MB flash)"))
+        P.append(Part(ref="C65", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="10uF",
+                      pins={"1": "+3V3", "2": "GND"}, x=36.0, y=Ys + 18.0, rot=90, lcsc="C15850", desc="ESP32 3V3 bulk"))
+        P.append(Part(ref="C66", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
+                      pins={"1": "+3V3", "2": "GND"}, x=31.0, y=Ys + 30.0, rot=90, lcsc="C14663", desc="ESP32 3V3 decoupling"))
+        P.append(Part(ref="R19", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
+                      pins={"1": "+3V3", "2": "EN"}, x=31.0, y=Ys + 18.0, rot=90, lcsc="C25804", desc="EN pull-up"))
+        P.append(Part(ref="C67", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="1uF",
+                      pins={"1": "EN", "2": "GND"}, x=31.0, y=Ys + 22.0, rot=90, lcsc="C15849", desc="EN reset delay"))
+        P.append(Part(ref="R20", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
+                      pins={"1": "+3V3", "2": "IO0"}, x=31.0, y=Ys + 26.0, rot=90, lcsc="C25804", desc="IO0 pull-up"))
+        P.append(Part(ref="SW1", symbol="Switch:SW_Push", footprint="Button_Switch_SMD:SW_SPST_TL3342", value="RESET",
+                      pins={"1": "EN", "2": "GND"}, x=56.0, y=H - 6.0, rot=0, lcsc="C318884", mpn="TS-1187A-B-A-B", desc="Reset button"))
+        P.append(Part(ref="SW2", symbol="Switch:SW_Push", footprint="Button_Switch_SMD:SW_SPST_TL3342", value="BOOT",
+                      pins={"1": "IO0", "2": "GND"}, x=46.0, y=H - 6.0, rot=0, lcsc="C318884", mpn="TS-1187A-B-A-B", desc="Boot button"))
+        # 3.3 V LDO
+        P.append(Part(ref="U2", symbol="Regulator_Linear:AMS1117-3.3", footprint="Package_TO_SOT_SMD:SOT-223-3_TabPin2",
+                      value="AMS1117-3.3", pins={"1": "GND", "2": "+3V3", "3": "+5V"}, x=118.0, y=H - 18.0, rot=0,
+                      lcsc="C6186", mpn="AMS1117-3.3", desc="3.3V 1A LDO"))
+        P.append(Part(ref="C68", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="10uF",
+                      pins={"1": "+5V", "2": "GND"}, x=112.0, y=H - 11.0, rot=0, lcsc="C15850", desc="LDO input"))
+        P.append(Part(ref="C69", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="10uF",
+                      pins={"1": "+3V3", "2": "GND"}, x=124.0, y=H - 11.0, rot=0, lcsc="C15850", desc="LDO output"))
+        # USB-serial bridge + auto-reset (DevKitC circuit)
+        P.append(Part(ref="U3", symbol="Interface_USB:CH340C", footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm", value="CH340C",
+                      pins={"1": "GND", "2": "TXD0_U", "3": "RXD0_U", "4": "CH_V3", "5": "USB_D+", "6": "USB_D-", "7": "NC_U3_7",
+                            "8": "NC_U3_8", "9": "NC_U3_9", "10": "NC_U3_10", "11": "NC_U3_11", "12": "NC_U3_12",
+                            "13": "DTR", "14": "RTS", "15": "NC_U3_15", "16": "+5V"},
+                      x=78.0, y=H - 22.0, rot=90, lcsc="C84681", mpn="CH340C", desc="USB to UART (no crystal needed)"))
+        P.append(Part(ref="C71", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
+                      pins={"1": "+5V", "2": "GND"}, x=70.0, y=H - 26.0, rot=0, lcsc="C14663", desc="CH340 VCC decoupling"))
+        P.append(Part(ref="C72", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
+                      pins={"1": "CH_V3", "2": "GND"}, x=86.0, y=H - 26.0, rot=0, lcsc="C14663", desc="CH340 V3 decoupling"))
+        P.append(Part(ref="Q9", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
+                      pins={"1": "DTR_R", "2": "RTS", "3": "EN"}, x=66.0, y=H - 16.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-reset"))
+        P.append(Part(ref="Q10", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
+                      pins={"1": "RTS_R", "2": "DTR", "3": "IO0"}, x=70.0, y=H - 16.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-boot"))
+        P.append(Part(ref="R21", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
+                      pins={"1": "DTR", "2": "DTR_R"}, x=66.0, y=H - 12.0, rot=0, lcsc="C25804", desc="Auto-reset base"))
+        P.append(Part(ref="R22", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
+                      pins={"1": "RTS", "2": "RTS_R"}, x=70.0, y=H - 12.0, rot=0, lcsc="C25804", desc="Auto-boot base"))
+        usb_dp, usb_dm = "USB_D+", "USB_D-"
+        row_pullup_y = (Ys + 20.0, Ys + 23.0)
+    else:
+        # Plug-in dev board: two 1x19 sockets. Top row = dev board's right column, bottom row = left column
+        # (board rotated antenna-left, USB-right, component side up).
+        y_top = Ys + DEV_Y0_OFFSET
+        P.append(Part(ref="J3", symbol="Connector_Generic:Conn_01x19", footprint="Connector_PinSocket_2.54mm:PinSocket_1x19_P2.54mm_Vertical",
+                      value="DEV_TOP", pins={str(i + 1): n for i, n in enumerate(DEV_RIGHT)}, x=DEV_X0, y=y_top, rot=0,
+                      lcsc="", mpn="1x19 female header 2.54 mm", desc="Dev board socket, top row (GND,23,22,TX,RX,21,GND,19,18,5,17,16,4,0,2,15,SD1,SD0,CLK)"))
+        P.append(Part(ref="J4", symbol="Connector_Generic:Conn_01x19", footprint="Connector_PinSocket_2.54mm:PinSocket_1x19_P2.54mm_Vertical",
+                      value="DEV_BOTTOM", pins={str(i + 1): n for i, n in enumerate(DEV_LEFT)}, x=DEV_X0, y=y_top + DEV_ROW_SPACING, rot=0,
+                      lcsc="", mpn="1x19 female header 2.54 mm", desc="Dev board socket, bottom row (3V3,EN,VP,VN,34,35,32,33,25,26,27,14,12,GND,13,SD2,SD3,CMD,5V)"))
+        usb_dp, usb_dm = "NC_USB_D+", "NC_USB_D-"
+        row_pullup_y = (Ys + 24.0, Ys + 27.0)
 
-    # Row pull-ups (10k to 3V3) in a column next to the module
+    # Row pull-ups (10k to 3V3)
     for r in range(8):
         P.append(Part(ref=f"R{9+r}", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
-                      pins={"1": "+3V3", "2": f"ROW{r}"}, x=40.0 + 2.2 * (r % 4), y=Ys + 20.0 + 3.0 * (r // 4), rot=90,
+                      pins={"1": "+3V3", "2": f"ROW{r}"}, x=40.0 + 2.2 * (r % 4), y=row_pullup_y[r // 4], rot=90,
                       lcsc="C25804", desc=f"ROW{r} pull-up"))
 
     # LED data level shifter 3.3V -> 5V
@@ -204,70 +260,42 @@ def build_parts() -> List[Part]:
     P.append(Part(ref="R23", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="330",
                   pins={"1": "LED_DATA_5V", "2": "LED_DATA"}, x=38.0, y=Ys + 5.0, rot=0, lcsc="C23138", desc="LED data series"))
 
-    # Power input: USB-C (5V/3A) + optional external 5V, polyfuse, bulk caps, LDO
+    # Power input: USB-C (5V/3A) + optional external 5V, polyfuse, bulk caps
     P.append(Part(ref="J1", symbol="Connector:USB_C_Receptacle_USB2.0_16P",
                   footprint="Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12", value="USB-C",
-                  pins={"A1": "GND", "A4": "VBUS", "A5": "CC1", "A6": "USB_D+", "A7": "USB_D-", "A8": "NC_SBU1",
-                        "A9": "VBUS", "A12": "GND", "B1": "GND", "B4": "VBUS", "B5": "CC2", "B6": "USB_D+",
-                        "B7": "USB_D-", "B8": "NC_SBU2", "B9": "VBUS", "B12": "GND", "S1": "GND"},
-                  x=78.0, y=BOARD_H - 3.9, rot=0, lcsc="C165948", mpn="TYPE-C-31-M-12", desc="USB-C receptacle 16P"))
+                  pins={"A1": "GND", "A4": "VBUS", "A5": "CC1", "A6": usb_dp, "A7": usb_dm, "A8": "NC_SBU1",
+                        "A9": "VBUS", "A12": "GND", "B1": "GND", "B4": "VBUS", "B5": "CC2", "B6": usb_dp,
+                        "B7": usb_dm, "B8": "NC_SBU2", "B9": "VBUS", "B12": "GND", "S1": "GND"},
+                  x=78.0, y=H - 3.9, rot=0, lcsc="C165948", mpn="TYPE-C-31-M-12", desc="USB-C receptacle 16P"))
     P.append(Part(ref="R17", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="5.1k",
-                  pins={"1": "CC1", "2": "GND"}, x=70.0, y=Ys + 34.0, rot=0, lcsc="C23186", desc="USB CC1 pull-down"))
+                  pins={"1": "CC1", "2": "GND"}, x=70.0, y=H - 8.0, rot=0, lcsc="C23186", desc="USB CC1 pull-down"))
     P.append(Part(ref="R18", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="5.1k",
-                  pins={"1": "CC2", "2": "GND"}, x=87.0, y=Ys + 34.0, rot=0, lcsc="C23186", desc="USB CC2 pull-down"))
+                  pins={"1": "CC2", "2": "GND"}, x=87.0, y=H - 8.0, rot=0, lcsc="C23186", desc="USB CC2 pull-down"))
     P.append(Part(ref="F1", symbol="Device:Polyfuse", footprint="Fuse:Fuse_1812_4532Metric", value="3A PTC",
-                  pins={"1": "VBUS", "2": "+5V"}, x=99.0, y=Ys + 31.0, rot=90, lcsc="", mpn="MF-MSMF300-2 / BSMD1812-300",
+                  pins={"1": "VBUS", "2": "+5V"}, x=99.0, y=H - 11.0, rot=90, lcsc="", mpn="MF-MSMF300-2 / BSMD1812-300",
                   desc="Resettable fuse 3A hold (USB path)"))
     P.append(Part(ref="J2", symbol="Connector_Generic:Conn_01x02", footprint="Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
-                  value="5V IN", pins={"1": "+5V", "2": "GND"}, x=108.0, y=BOARD_H - 5.0, rot=0, lcsc="C158012",
+                  value="5V IN", pins={"1": "+5V", "2": "GND"}, x=118.0, y=H - 5.0, rot=0, lcsc="C158012",
                   mpn="B2B-XH-A", desc="External 5V/4A input (optional, bypasses fuse)"))
     P.append(Part(ref="C75", symbol="Device:C_Polarized", footprint="Capacitor_SMD:CP_Elec_8x10", value="470uF 10V",
-                  pins={"1": "+5V", "2": "GND"}, x=104.0, y=Ys + 22.0, rot=90, lcsc="", mpn="470uF/10V SMD 8x10",
+                  pins={"1": "+5V", "2": "GND"}, x=104.0, y=H - 20.0, rot=90, lcsc="", mpn="470uF/10V SMD 8x10",
                   desc="5V bulk capacitor"))
     P.append(Part(ref="C76", symbol="Device:C_Polarized", footprint="Capacitor_SMD:CP_Elec_8x10", value="470uF 10V",
-                  pins={"1": "+5V", "2": "GND"}, x=94.0, y=Ys + 22.0, rot=90, lcsc="", mpn="470uF/10V SMD 8x10",
+                  pins={"1": "+5V", "2": "GND"}, x=94.0, y=H - 20.0, rot=90, lcsc="", mpn="470uF/10V SMD 8x10",
                   desc="5V bulk capacitor"))
-    P.append(Part(ref="U2", symbol="Regulator_Linear:AMS1117-3.3", footprint="Package_TO_SOT_SMD:SOT-223-3_TabPin2",
-                  value="AMS1117-3.3", pins={"1": "GND", "2": "+3V3", "3": "+5V"}, x=118.0, y=Ys + 24.0, rot=0,
-                  lcsc="C6186", mpn="AMS1117-3.3", desc="3.3V 1A LDO"))
-    P.append(Part(ref="C68", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="10uF",
-                  pins={"1": "+5V", "2": "GND"}, x=112.0, y=Ys + 31.0, rot=0, lcsc="C15850", desc="LDO input"))
-    P.append(Part(ref="C69", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="10uF",
-                  pins={"1": "+3V3", "2": "GND"}, x=124.0, y=Ys + 31.0, rot=0, lcsc="C15850", desc="LDO output"))
     P.append(Part(ref="DL1", symbol="Device:LED", footprint="LED_SMD:LED_0603_1608Metric", value="PWR",
-                  pins={"1": "GND", "2": "PWRLED"}, x=136.0, y=Ys + 36.0, rot=0, lcsc="C72043", desc="Power LED (green)"))
+                  pins={"1": "GND", "2": "PWRLED"}, x=136.0, y=H - 6.0, rot=0, lcsc="C72043", desc="Power LED (green)"))
     P.append(Part(ref="R24", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="1k",
-                  pins={"1": "+3V3", "2": "PWRLED"}, x=136.0, y=Ys + 32.0, rot=0, lcsc="C21190", desc="Power LED series"))
-
-    # USB-serial bridge + auto-reset (DevKitC circuit)
-    P.append(Part(ref="U3", symbol="Interface_USB:CH340C", footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm", value="CH340C",
-                  pins={"1": "GND", "2": "TXD0_U", "3": "RXD0_U", "4": "CH_V3", "5": "USB_D+", "6": "USB_D-", "7": "NC_U3_7",
-                        "8": "NC_U3_8", "9": "NC_U3_9", "10": "NC_U3_10", "11": "NC_U3_11", "12": "NC_U3_12",
-                        "13": "DTR", "14": "RTS", "15": "NC_U3_15", "16": "+5V"},
-                  x=78.0, y=Ys + 20.0, rot=90, lcsc="C84681", mpn="CH340C", desc="USB to UART (no crystal needed)"))
-    P.append(Part(ref="C71", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
-                  pins={"1": "+5V", "2": "GND"}, x=70.0, y=Ys + 16.0, rot=0, lcsc="C14663", desc="CH340 VCC decoupling"))
-    P.append(Part(ref="C72", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
-                  pins={"1": "CH_V3", "2": "GND"}, x=86.0, y=Ys + 16.0, rot=0, lcsc="C14663", desc="CH340 V3 decoupling"))
-    P.append(Part(ref="Q9", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
-                  pins={"1": "DTR_R", "2": "RTS", "3": "EN"}, x=66.0, y=Ys + 26.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-reset"))
-    P.append(Part(ref="Q10", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
-                  pins={"1": "RTS_R", "2": "DTR", "3": "IO0"}, x=70.0, y=Ys + 26.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-boot"))
-    P.append(Part(ref="R21", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
-                  pins={"1": "DTR", "2": "DTR_R"}, x=66.0, y=Ys + 30.0, rot=0, lcsc="C25804", desc="Auto-reset base"))
-    P.append(Part(ref="R22", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
-                  pins={"1": "RTS", "2": "RTS_R"}, x=70.0, y=Ys + 30.0, rot=0, lcsc="C25804", desc="Auto-boot base"))
-    # TXD0 (ESP) -> RXD (CH340),  TXD (CH340) -> RXD0 (ESP): join via 0-ohm-free nets
-    # (We simply name the nets so that ESP TXD0 == CH340 RXD etc.)
+                  pins={"1": "+3V3", "2": "PWRLED"}, x=136.0, y=H - 10.0, rot=0, lcsc="C21190", desc="Power LED series"))
 
     # Column drivers: 74HCT595 + 8x (1k + PNP high-side switch), one PNP under each column
     P.append(Part(ref="U4", symbol="74xx:74HCT595", footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm", value="74HCT595",
                   pins={"1": "SRQ1", "2": "SRQ2", "3": "SRQ3", "4": "SRQ4", "5": "SRQ5", "6": "SRQ6", "7": "SRQ7",
                         "8": "GND", "9": "NC_U4_9", "10": "+5V", "11": "IO14", "12": "IO26", "13": "GND",
                         "14": "IO33", "15": "SRQ0", "16": "+5V"},
-                  x=170.0, y=Ys + 24.0, rot=90, lcsc="", mpn="SN74HCT595DR / 74HCT595D", desc="Column shift register (HCT = 3.3V-input compatible)"))
+                  x=170.0, y=H - 18.0, rot=90, lcsc="", mpn="SN74HCT595DR / 74HCT595D", desc="Column shift register (HCT = 3.3V-input compatible)"))
     P.append(Part(ref="C73", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
-                  pins={"1": "+5V", "2": "GND"}, x=170.0, y=Ys + 32.0, rot=0, lcsc="C14663", desc="U4 decoupling"))
+                  pins={"1": "+5V", "2": "GND"}, x=170.0, y=H - 10.0, rot=0, lcsc="C14663", desc="U4 decoupling"))
     for f in range(8):
         cx, cy = sq_center(f, 0)
         qx = cx + COL_DX

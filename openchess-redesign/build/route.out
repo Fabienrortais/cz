@@ -1,0 +1,2 @@
+DSN export: True /home/user/cz/openchess-redesign/hardware/../build/openchess-board.dsn fixed tracks/vias: 1088
+DSN classes: ['kicad_default'] | fixed wires: 1042 | protect: 0

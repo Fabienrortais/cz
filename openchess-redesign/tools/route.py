@@ -32,10 +32,10 @@ def main():
     passes = "30"
     if "--passes" in sys.argv:
         passes = sys.argv[sys.argv.index("--passes") + 1]
-    work = os.path.join(os.path.dirname(os.path.abspath(path)), "..", "build")
+    work = os.path.join(os.path.dirname(os.path.abspath(path)), "..", "build", D.VARIANT)
     os.makedirs(work, exist_ok=True)
-    dsn = os.path.join(work, "openchess-board.dsn")
-    ses = os.path.join(work, "openchess-board.ses")
+    dsn = os.path.join(work, D.PROJECT + ".dsn")
+    ses = os.path.join(work, D.PROJECT + ".ses")
 
     board = pcbnew.LoadBoard(path)
     n_fixed = len(list(board.GetTracks()))

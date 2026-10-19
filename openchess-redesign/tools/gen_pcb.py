@@ -211,6 +211,17 @@ def build(out_path):
             continue  # placed below from LED pad geometry
         B.add_part(p)
 
+    # dev board sockets: make pin numbers increase towards +x
+    for ref in ("J3", "J4"):
+        if ref in B.fps:
+            fp = B.fps[ref]
+            for rot in (90, 270, 0, 180):
+                fp.SetOrientationDegrees(rot)
+                p1, p2 = B.pad(ref, "1"), B.pad(ref, "2")
+                if abs(p2[1] - p1[1]) < 0.01 and p2[0] > p1[0]:
+                    break
+            fp.SetPosition(V(D.DEV_X0 - (B.pad(ref, "1")[0] - mm(fp.GetPosition().x)), mm(fp.GetPosition().y)))
+
     # LED decoupling caps: next to the LED VDD pad
     for p in parts:
         if not p.extra.get("led_cap"):
@@ -248,7 +259,7 @@ def build(out_path):
         B.track(cxh - 0.94 if B.pad(f"H{r*8+8}", D.SENSOR["pins"]["OUT"])[1] >= cyr else cxh - 2.6, rowy,
                 x_end, rowy, F, D.W_SIG, f"ROW{r}")
         B.via(x_end, rowy, f"ROW{r}")
-        B.track(x_end, rowy, x_end, Ys + 6.0, Bk, D.W_SIG, f"ROW{r}")   # bundle down to the strip
+        B.track(x_end, rowy, x_end, Ys + (6.0 if D.VARIANT == "module" else 15.0), Bk, D.W_SIG, f"ROW{r}")   # bundle down to the strip
 
     # column traces (B.Cu) and vertical +5V buses (B.Cu)
     for f in range(8):
@@ -268,16 +279,17 @@ def build(out_path):
     cxa, _ = D.sq_center(0, 0); cxh, _ = D.sq_center(7, 0)
     B.track(cxa + D.COL_DX + 0.95, Ys + 2.0, cxh + D.BUS_DX, Ys + 2.0, Bk, D.W_MAINBUS, "+5V")   # from Q1 emitter via to the h bus
     # power entry: B.Cu 3 mm from the bus down to 3 vias, then F.Cu bar to the fuse (+5V side)
-    B.track(99.0, Ys + 2.0, 99.0, Ys + 26.5, Bk, 3.0, "+5V")
-    for vx in (97.5, 99.0, 100.5):
-        B.via(vx, Ys + 26.5, "+5V", 0.8, 0.4)
     f2 = B.pad("F1", "2"); f1 = B.pad("F1", "1")
-    B.track(97.5, Ys + 26.5, 100.5, Ys + 26.5, F, 1.5, "+5V")
-    B.track(99.0, Ys + 26.5, f2[0], f2[1], F, 1.5, "+5V")
+    ey = f2[1] - 2.36
+    B.track(99.0, Ys + 2.0, 99.0, ey, Bk, 3.0, "+5V")
+    for vx in (97.5, 99.0, 100.5):
+        B.via(vx, ey, "+5V", 0.8, 0.4)
+    B.track(97.5, ey, 100.5, ey, F, 1.5, "+5V")
+    B.track(99.0, ey, f2[0], f2[1], F, 1.5, "+5V")
     # USB VBUS: thin stubs out of the 0.5 mm pad row, then a 0.8 mm B.Cu run under the connector to the fuse.
     vb = sorted({round(B.pad("J1", n)[0], 3) for n in ("A4", "A9", "B4", "B9")})
     vy = B.pad("J1", "A4")[1]
-    vyr = Ys + 32.6
+    vyr = vy - 1.45
     for vx in vb:
         B.track(vx, vy, vx, vyr, F, 0.28, "VBUS")
     B.track(vb[0], vyr, vb[0] - 2.55, vyr, F, 0.3, "VBUS"); B.via(vb[0] - 2.55, vyr, "VBUS", 0.8, 0.4)
@@ -289,19 +301,23 @@ def build(out_path):
     sig = [("A5", "CC1"), ("B7", "USB_D-"), ("A6", "USB_D+"), ("A7", "USB_D-"), ("B6", "USB_D+"), ("B5", "CC2")]
     fan = [74.3, 75.6, 76.9, 78.2, 79.5, 80.8]
     ends = {}
+    y1, y2 = vy - 2.55, vy - 6.55
     for (pn, net), fx in zip(sig, fan):
+        if net not in B.nets:          # nodemcu variant: USB-C is power only
+            continue
         px, py = B.pad("J1", pn)
-        B.poly([(px, py), (px, Ys + 31.5), (fx, Ys + 27.5)], F, 0.2, net)
+        B.poly([(px, py), (px, y1), (fx, y2)], F, 0.2, net)
         ends.setdefault(net, []).append(fx)
-    dm = ends["USB_D-"]; dp = ends["USB_D+"]
-    for fx in dm:
-        B.track(fx, Ys + 27.5, fx, Ys + 26.5, F, 0.2, "USB_D-"); B.via(fx, Ys + 26.5, "USB_D-")
-    B.track(dm[0], Ys + 26.5, dm[1], Ys + 26.5, Bk, 0.3, "USB_D-")
-    B.track(dm[1], Ys + 26.5, dm[1], Ys + 24.5, Bk, 0.3, "USB_D-")
-    for fx in dp:
-        B.track(fx, Ys + 27.5, fx, Ys + 25.0, F, 0.2, "USB_D+")
-    B.track(dp[0], Ys + 25.0, dp[1], Ys + 25.0, F, 0.3, "USB_D+")
-    B.track(dp[1], Ys + 25.0, dp[1], Ys + 24.0, F, 0.3, "USB_D+")
+    if "USB_D-" in ends:
+        dm = ends["USB_D-"]; dp = ends["USB_D+"]
+        for fx in dm:
+            B.track(fx, y2, fx, y2 - 1.0, F, 0.2, "USB_D-"); B.via(fx, y2 - 1.0, "USB_D-")
+        B.track(dm[0], y2 - 1.0, dm[1], y2 - 1.0, Bk, 0.3, "USB_D-")
+        B.track(dm[1], y2 - 1.0, dm[1], y2 - 3.0, Bk, 0.3, "USB_D-")
+        for fx in dp:
+            B.track(fx, y2, fx, y2 - 2.5, F, 0.2, "USB_D+")
+        B.track(dp[0], y2 - 2.5, dp[1], y2 - 2.5, F, 0.3, "USB_D+")
+        B.track(dp[1], y2 - 2.5, dp[1], y2 - 3.5, F, 0.3, "USB_D+")
     # external 5V input J2 -> +5V (fuse output side)
     j2 = B.pad("J2", "1")
     B.poly([j2, (j2[0], f2[1]), f2], F, 1.0, "+5V")
@@ -357,8 +373,13 @@ def build(out_path):
     B.zone(outline, F, "GND", "GND_top")
     B.zone(outline, Bk, "GND", "GND_bottom")
     # antenna keep-out (no copper of any kind under the ESP32 antenna)
-    ant = [(0.0, Ys + 33.8), (40.0, Ys + 33.8), (40.0, H), (0.0, H)]
-    B.rule_area(ant, [F, Bk], "antenna_keepout")
+    if D.VARIANT == "module":
+        ant = [(0.0, Ys + 33.8), (40.0, Ys + 33.8), (40.0, H), (0.0, H)]
+        B.rule_area(ant, [F, Bk], "antenna_keepout")
+    else:   # no pour under the dev board's antenna end (tracks to the end pins are allowed)
+        y0 = Ys + D.DEV_Y0_OFFSET
+        ant = [(0.0, y0 - 2.5), (D.DEV_X0 + 9.0, y0 - 2.5), (D.DEV_X0 + 9.0, y0 + D.DEV_ROW_SPACING + 2.5), (0.0, y0 + D.DEV_ROW_SPACING + 2.5)]
+        B.rule_area(ant, [F, Bk], "devboard_antenna_nopour", tracks=False, vias=False, pour=True)
 
     # ------------------------------------------------------- GND stitching vias
     for i in range(9):
@@ -369,11 +390,15 @@ def build(out_path):
         B.via(cx + 15.0, Ys + 16.3, "GND")
         B.via(cx, 4.0, "GND")
     for x in (66, 90, 108, 150, 190, 210, 230, 250, 270, 290, 310):
-        B.via(x, Ys + 39.5, "GND")
+        B.via(x, H - 2.5, "GND")
     for y in range(40, int(Ys) - 20, 40):
         B.via(W - 5.0, y + 20, "GND")
-    B.stitch_grid([x for x in range(30, int(W) - 8, 6)], [Ys + 17.5 + 5.5 * k for k in range(5)], "GND",
-                  exclude=lambda x, y: (x < 42 and y > Ys + 12) or (x < 40 and y > Ys + 33))
+    if D.VARIANT == "module":
+        excl = lambda x, y: (x < 42 and y > Ys + 12) or (x < 40 and y > Ys + 33)
+    else:
+        excl = lambda x, y: (x < 58 and y > Ys + 15)
+    B.stitch_grid([x for x in range(30, int(W) - 8, 6)], [Ys + 17.5 + 5.5 * k for k in range(int((H - Ys - 20) / 5.5))], "GND",
+                  exclude=excl)
 
     # -------------------------------------------------------------- silkscreen
     for r in range(8):
@@ -383,11 +408,16 @@ def build(out_path):
             B.text(D.sq_name(f, r), cx - 16.5, cy - 16.0, 2.0)
             B.line(cx - D.PITCH / 2, cy - D.PITCH / 2, cx + D.PITCH / 2, cy - D.PITCH / 2, w=0.1)
             B.line(cx - D.PITCH / 2, cy - D.PITCH / 2, cx - D.PITCH / 2, cy + D.PITCH / 2, w=0.1)
-    B.text("OpenChess PCB redesign v1.0 - 8x8 Hall + WS2812B, firmware-compatible with joojoooo/OpenChess", 265, Ys + 31.0, 1.8)
-    B.text("GPIO: LED IO32 | SR SER IO33 SRCLK IO14 RCLK IO26 | ROW1..8 = IO4,16,17,18,19,21,22,23", 265, Ys + 34.0, 1.2)
-    B.text("Column drivers are PNP: set SR_INVERT_OUTPUTS = PNP in the WebUI. J1 USB-C 5V/3A (fused) | J2 ext 5V 4A", 265, Ys + 36.5, 1.2)
+    B.text(f"OpenChess PCB redesign v1.0 ({D.VARIANT}) - 8x8 Hall + WS2812B, firmware-compatible with joojoooo/OpenChess", 265, H - 11.0, 1.8)
+    B.text("GPIO: LED IO32 | SR SER IO33 SRCLK IO14 RCLK IO26 | ROW1..8 = IO4,16,17,18,19,21,22,23", 265, H - 8.0, 1.2)
+    B.text("Column drivers are PNP: set SR_INVERT_OUTPUTS = PNP in the WebUI. J1 USB-C 5V/3A (fused) | J2 ext 5V 4A", 265, H - 5.5, 1.2)
     B.text("iron disc 12 mm centred on circle; magnet S-pole down", 60, 7.0, 1.5)
-    B.text("ANTENNA - keep clear", 20, Ys + 37.5, 1.0, layer=pcbnew.B_SilkS)
+    if D.VARIANT == "module":
+        B.text("ANTENNA - keep clear", 20, H - 4.5, 1.0, layer=pcbnew.B_SilkS)
+    else:
+        y0 = Ys + D.DEV_Y0_OFFSET
+        B.text("38-pin ESP32 dev board: antenna LEFT, USB RIGHT. 3V3 = bottom-left pin, 5V = bottom-right pin", D.DEV_X0 + 2, y0 - 4.5, 1.1)
+        B.text("ANTENNA", D.DEV_X0 + 4, y0 + D.DEV_ROW_SPACING / 2, 1.0)
 
     pcbnew.SaveBoard(out_path, B.b)
     set_page(out_path)
@@ -424,7 +454,8 @@ def write_project(path):
 
 
 if __name__ == "__main__":
-    hw = os.path.join(os.path.dirname(__file__), "..", "hardware")
+    hw = os.path.join(os.path.dirname(__file__), "..", "hardware" + D.OUT_SUFFIX)
+    os.makedirs(hw, exist_ok=True)
     out = os.path.join(hw, PROJECT + ".kicad_pcb")
     write_project(os.path.join(hw, PROJECT + ".kicad_pro"))
     B = build(out)

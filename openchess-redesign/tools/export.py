@@ -6,10 +6,11 @@ import design as D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-HW = os.path.join(ROOT, "hardware")
-MF = os.path.join(ROOT, "manufacturing")
-PCB = os.path.join(HW, "openchess-board.kicad_pcb")
-SCH = os.path.join(HW, "openchess-board.kicad_sch")
+HW = os.path.join(ROOT, "hardware" + D.OUT_SUFFIX)
+MF = os.path.join(ROOT, "manufacturing" + D.OUT_SUFFIX)
+PCB = os.path.join(HW, D.PROJECT + ".kicad_pcb")
+SCH = os.path.join(HW, D.PROJECT + ".kicad_sch")
+IMG = os.path.join(ROOT, "docs", "img" + D.OUT_SUFFIX)
 
 def run(cmd):
     print("$", " ".join(cmd))
@@ -23,7 +24,7 @@ def gerbers():
          "--subtract-soldermask", "--no-x2", "--no-netlist", PCB])
     run(["kicad-cli", "pcb", "export", "drill", "-o", out + "/", "--format", "excellon", "--drill-origin", "absolute",
          "--excellon-units", "mm", "--excellon-zeros-format", "decimal", "--generate-map", "--map-format", "gerberx2", PCB])
-    zpath = os.path.join(MF, "openchess-board-gerbers.zip")
+    zpath = os.path.join(MF, D.PROJECT + "-gerbers.zip")
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
         for f in sorted(os.listdir(out)):
             z.write(os.path.join(out, f), f)
@@ -33,7 +34,7 @@ def bom_cpl():
     parts = [p for p in D.build_parts() if p.pins]   # skip mounting holes
     board = pcbnew.LoadBoard(PCB)
     # --- JLCPCB CPL (pick & place). Y is negated like KiCad's own position export.
-    with open(os.path.join(MF, "openchess-board-cpl-jlcpcb.csv"), "w", newline="") as f:
+    with open(os.path.join(MF, D.PROJECT + "-cpl-jlcpcb.csv"), "w", newline="") as f:
         w = csv.writer(f); w.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
         for fp in sorted(board.GetFootprints(), key=lambda m: (m.GetReference()[0], int(''.join(c for c in m.GetReference()[1:] if c.isdigit()) or 0))):
             ref = fp.GetReference()
@@ -47,7 +48,7 @@ def bom_cpl():
     for p in parts:
         key = (p.value, p.footprint.split(":")[1], p.lcsc, p.mpn)
         groups.setdefault(key, []).append(p.ref)
-    with open(os.path.join(MF, "openchess-board-bom-jlcpcb.csv"), "w", newline="") as f:
+    with open(os.path.join(MF, D.PROJECT + "-bom-jlcpcb.csv"), "w", newline="") as f:
         w = csv.writer(f); w.writerow(["Comment", "Designator", "Footprint", "LCSC Part #"])
         for (val, fpn, lcsc, mpn), refs in groups.items():
             w.writerow([val, ",".join(refs), fpn, lcsc])
@@ -63,11 +64,11 @@ def bom_cpl():
     print("BOM groups:", len(groups), "parts:", len(parts))
 
 def previews():
-    out = os.path.join(ROOT, "docs", "img"); os.makedirs(out, exist_ok=True)
-    run(["kicad-cli", "sch", "export", "pdf", "-o", os.path.join(MF, "openchess-board-schematic.pdf"), SCH])
-    run(["kicad-cli", "pcb", "export", "pdf", "-o", os.path.join(MF, "openchess-board-top.pdf"),
+    out = IMG; os.makedirs(out, exist_ok=True)
+    run(["kicad-cli", "sch", "export", "pdf", "-o", os.path.join(MF, D.PROJECT + "-schematic.pdf"), SCH])
+    run(["kicad-cli", "pcb", "export", "pdf", "-o", os.path.join(MF, D.PROJECT + "-top.pdf"),
          "--layers", "F.Cu,F.SilkS,F.Mask,Edge.Cuts", "--include-border-title", PCB])
-    run(["kicad-cli", "pcb", "export", "pdf", "-o", os.path.join(MF, "openchess-board-bottom.pdf"),
+    run(["kicad-cli", "pcb", "export", "pdf", "-o", os.path.join(MF, D.PROJECT + "-bottom.pdf"),
          "--layers", "B.Cu,B.SilkS,Edge.Cuts", "--mirror", "--include-border-title", PCB])
     run(["kicad-cli", "pcb", "export", "pdf", "-o", os.path.join(out, "_both.pdf"),
          "--layers", "F.Cu,B.Cu,F.SilkS,Edge.Cuts", "--erd", PCB])
@@ -76,7 +77,7 @@ def previews():
          os.path.join(out, "_both.pdf"), os.path.join(out, "pcb-controller-strip")])
     run(["pdftoppm", "-r", "120", "-png", "-singlefile", "-x", "0", "-y", "0", "-W", "600", "-H", "500",
          os.path.join(out, "_both.pdf"), os.path.join(out, "pcb-square-detail")])
-    run(["pdftoppm", "-r", "50", "-png", "-singlefile", os.path.join(MF, "openchess-board-schematic.pdf"), os.path.join(out, "schematic")])
+    run(["pdftoppm", "-r", "50", "-png", "-singlefile", os.path.join(MF, D.PROJECT + "-schematic.pdf"), os.path.join(out, "schematic")])
     os.remove(os.path.join(out, "_both.pdf"))
 
 if __name__ == "__main__":
