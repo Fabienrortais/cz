@@ -28,6 +28,32 @@ replacing the hand-wired "plastic PCB" + perfboard with one assembled board.
 - GPIO map = upstream defaults, so the firmware needs no changes:
   LED IO32, SR SER IO33, SRCLK IO14, RCLK IO26, rows IO4,16,17,18,19,21,22,23.
 
+## Two variants
+
+| Variant | Controller | Output folders | Use when |
+|---|---|---|---|
+| `module` (default) | ESP32-WROOM-32E soldered on the board, CH340C USB-UART, AMS1117-3.3, RESET/BOOT buttons | `hardware/`, `manufacturing/`, `docs/img/` | You want one fully assembled board from JLCPCB/PCBWay. |
+| `nodemcu` | Two 19-pin sockets for a plug-in 38-pin ESP32 dev board (NodeMCU-32S, ESP32-DevKitC V4, ...). USB-C is power only; flashing is done through the dev board's own USB. | `hardware-nodemcu/`, `manufacturing-nodemcu/`, `docs/img-nodemcu/` | You already have a NodeMCU / DevKitC. Strip is 56 mm tall (board 340 x 388 mm). |
+
+NodeMCU variant notes:
+
+- The dev board plugs in with its **antenna to the left and USB to the right**
+  (silkscreen says so). Bottom-left pin is 3V3, bottom-right pin is 5V; the
+  top row carries GND, IO23, IO22, TX, RX, IO21, GND, IO19, IO18, IO5, IO17,
+  IO16, IO4, ... which is the pin order of both the NodeMCU-32S and the
+  Espressif DevKitC V4. Check the silkscreen of your board: 3V3 and 5V must
+  land on those two corner pins. If a signal pin differs, that is harmless:
+  every signal GPIO is configurable in the OpenChess WebUI.
+- `DEV_ROW_SPACING` in `design.py` is the distance between the two pin rows:
+  22.86 mm (0.9") for the NodeMCU-32S, 25.4 mm (1.0") for the DevKitC V4.
+  Measure yours centre-to-centre before ordering.
+- No copper pour is placed under the antenna end of the dev board.
+- Power the board from the USB-C or J2 (5 V/4 A). Powering only through the
+  dev board's micro-USB works for testing but its diode limits LED current.
+
+Build one variant with `VARIANTS=nodemcu ./build.sh /path/to/freerouting.jar`
+or set `OPENCHESS_VARIANT=nodemcu` when running the tools by hand.
+
 Folder layout:
 
 ```
@@ -35,8 +61,8 @@ openchess-redesign/
   AUDIT.md           audit of the upstream project
   README.md          this file
   ORDERING.md        how to order at JLCPCB / PCBWay, cost notes, assembly notes
-  hardware/          KiCad 7 project: .kicad_pro / .kicad_sch / .kicad_pcb (+ DRC report)
-  manufacturing/     gerber zip, drill, JLCPCB BOM + CPL, BOM.md, PDFs
+  hardware/          KiCad project of the module variant (+ DRC report); hardware-nodemcu/ for the dev-board variant
+  manufacturing/     gerber zip, drill, JLCPCB BOM + CPL, BOM.md, PDFs (manufacturing-nodemcu/ likewise)
   tools/             generators (everything above is produced from design.py)
   docs/img/          previews
   build.sh           regenerate everything
