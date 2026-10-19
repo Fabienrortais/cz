@@ -374,6 +374,10 @@ def build(out_path):
             px, py = B.pad(ref, pn)
             B.track(px, py, px, py + dy, F, 0.4, "GND"); B.via(px, py + dy, "GND")
 
+    # 74HCT595 OE pin (GND) sits in a pad row the router tends to box in: give it its own via before routing
+    px, py = B.pad("U4", "13")
+    B.track(px, py, px, py - 2.6, F, 0.3, "GND"); B.via(px, py - 2.6, "GND")
+
     # ------------------------------------------------------------ zones (GND)
     outline = [(0, 0), (W, 0), (W, H), (0, H)]
     B.zone(outline, F, "GND", "GND_top")

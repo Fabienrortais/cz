@@ -46,7 +46,7 @@ def main():
         nc = ds.m_NetSettings.m_DefaultNetClass
     except AttributeError:
         nc = ds.m_NetSettings.GetDefaultNetclass()
-    nc.SetClearance(MM(D.CLEARANCE + 0.06))
+    nc.SetClearance(MM(D.CLEARANCE + 0.02))
     ok = pcbnew.ExportSpecctraDSN(board, dsn)
     nc.SetClearance(MM(D.CLEARANCE))
     print("DSN export:", ok, dsn, "fixed tracks/vias:", n_fixed)

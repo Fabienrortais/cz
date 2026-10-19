@@ -57,7 +57,13 @@ def main():
                 for k in range(8):
                     a = math.radians(45 * k)
                     vx, vy = x + rad * math.cos(a), y + rad * math.sin(a)
-                    if free_spot(board, vx, vy):
+                    # the stub track from the pad to the via must be free as well (sampled away from the pad itself)
+                    stub_ok = all(free_spot(board, x + (vx - x) * f, y + (vy - y) * f, keep=0.15)
+                                  for f in (0.55, 0.75) if rad * f > 1.0)
+                    if free_spot(board, vx, vy) and stub_ok:
+                        tr = pcbnew.PCB_TRACK(board)
+                        tr.SetStart(pcbnew.VECTOR2I(MM(x), MM(y))); tr.SetEnd(pcbnew.VECTOR2I(MM(vx), MM(vy)))
+                        tr.SetWidth(MM(0.3)); tr.SetLayer(pcbnew.F_Cu); tr.SetNetCode(gnd); board.Add(tr)
                         v = pcbnew.PCB_VIA(board)
                         v.SetPosition(pcbnew.VECTOR2I(MM(vx), MM(vy))); v.SetViaType(pcbnew.VIATYPE_THROUGH)
                         v.SetDrill(MM(D.VIA_DRILL)); v.SetWidth(MM(D.VIA_D)); v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
