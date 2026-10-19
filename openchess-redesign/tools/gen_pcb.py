@@ -12,6 +12,15 @@ MM = pcbnew.FromMM
 def V(x, y): return pcbnew.VECTOR2I(MM(x), MM(y))
 def mm(v): return pcbnew.ToMM(v)
 
+def set_page(path):
+    """A2 portrait page so that plots/PDFs contain the whole 340 x 374 mm board.
+    (PAGE_INFO is not exposed to Python in KiCad 7, so patch the saved file.)"""
+    import re
+    txt = open(path, encoding="utf-8").read()
+    txt = re.sub(r'\(paper "[^"]*"( portrait)?\)', '(paper "A2" portrait)', txt, count=1)
+    open(path, "w", encoding="utf-8").write(txt)
+
+
 class Builder:
     def __init__(self):
         self.b = pcbnew.BOARD()
@@ -335,6 +344,7 @@ def build(out_path):
     B.text("ANTENNA - keep clear", 20, Ys + 37.5, 1.0, layer=pcbnew.B_SilkS)
 
     pcbnew.SaveBoard(out_path, B.b)
+    set_page(out_path)
     return B
 
 

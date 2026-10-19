@@ -1,5 +1,6 @@
 """Fill zones, run DRC, print a summary. Usage: drc.py board.kicad_pcb [report.rpt] [--save]"""
-import sys, re, collections, pcbnew
+import os, sys, re, collections, pcbnew
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def run(path, report=None, save=False):
     board = pcbnew.LoadBoard(path)
@@ -7,7 +8,9 @@ def run(path, report=None, save=False):
     filler.Fill(board.Zones())
     report = report or path.replace(".kicad_pcb", "_drc.rpt")
     if save:
+        from gen_pcb import set_page
         pcbnew.SaveBoard(path, board)
+        set_page(path)
     import subprocess, shutil
     cli_ok = False
     if shutil.which("kicad-cli"):

@@ -64,6 +64,8 @@ def main():
     # Re-lock nothing; keep everything as routed. Fill zones and save.
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
     pcbnew.SaveBoard(path, board)
+    from gen_pcb import set_page
+    set_page(path)
     print("saved", path)
 
 if __name__ == "__main__":
