@@ -148,6 +148,23 @@ class Builder:
         self.b.Add(z)
         return z
 
+    def free_spot(self, x, y, keep=0.3, skip_ref=None):
+        """True if a via at (x, y) keeps `keep` mm from every pad (except skip_ref's own) and track."""
+        px, py = MM(x), MM(y)
+        r = MM(D.VIA_D / 2 + keep)
+        for fp in self.b.GetFootprints():
+            if fp.GetReference() == skip_ref:
+                continue
+            for pad in fp.Pads():
+                bb = pad.GetBoundingBox()
+                if bb.GetLeft() - r < px < bb.GetRight() + r and bb.GetTop() - r < py < bb.GetBottom() + r:
+                    return False
+        for tr in self.b.GetTracks():
+            bb = tr.GetBoundingBox()
+            if bb.GetLeft() - r < px < bb.GetRight() + r and bb.GetTop() - r < py < bb.GetBottom() + r:
+                return False
+        return 1.0 < x < D.BOARD_W - 1.0 and 1.0 < y < D.BOARD_H - 1.0
+
     def stitch_grid(self, xs, ys, net, exclude=None, keep=0.5):
         """Add vias on a grid wherever they are at least `keep` mm away from every pad/track/via."""
         items = []
@@ -373,6 +390,22 @@ def build(out_path):
         for ref, pn, dy in (("J3", "1", -3.0), ("J3", "7", +3.0), ("J4", "14", -3.0)):   # pin 1 goes up: outside the no-pour area
             px, py = B.pad(ref, pn)
             B.track(px, py, px, py + dy, F, 0.4, "GND"); B.via(px, py + dy, "GND")
+
+    # every 2-pad SMD part in the strip with a GND pad gets its own GND via (stub away from the other pad),
+    # so decoupling caps / pull-downs never end up on a pour island after autorouting
+    for p in parts:
+        if p.ref[0] in "HDC" and p.ref[1:].isdigit() and int(p.ref[1:]) <= 64:
+            continue
+        if len(p.pins) != 2 or "GND" not in p.pins.values() or not p.footprint.split(":")[1].startswith(("C_", "R_", "LED_")):
+            continue
+        gpin = next(k for k, v in p.pins.items() if v == "GND"); opin = next(k for k in p.pins if k != gpin)
+        gx, gy = B.pad(p.ref, gpin); ox, oy = B.pad(p.ref, opin)
+        dx, dy = gx - ox, gy - oy; L = (dx * dx + dy * dy) ** 0.5; dx, dy = dx / L, dy / L
+        for ddx, ddy, dist in ((dx, dy, 1.4), (dx, dy, 1.8), (-dy, dx, 1.5), (dy, -dx, 1.5)):
+            vx, vy = gx + ddx * dist, gy + ddy * dist
+            if B.free_spot(vx, vy, keep=0.3, skip_ref=p.ref):
+                B.track(gx, gy, vx, vy, F, 0.3, "GND"); B.via(vx, vy, "GND")
+                break
 
     # 74HCT595 OE pin (GND) sits in a pad row the router tends to box in: give it its own via before routing
     px, py = B.pad("U4", "13")
