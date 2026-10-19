@@ -368,6 +368,12 @@ def build(out_path):
         x_end = 160.0 if f < 4 else 180.0
         B.poly([rbot, (rbot[0], y_i), (x_end, y_i)], F, D.W_SIG, f"SRQ{f}")
 
+    # dev-board socket GND pins: short stub + via so they never end up on a pour island
+    if D.VARIANT != "module":
+        for ref, pn, dy in (("J3", "1", -3.0), ("J3", "7", +3.0), ("J4", "14", -3.0)):   # pin 1 goes up: outside the no-pour area
+            px, py = B.pad(ref, pn)
+            B.track(px, py, px, py + dy, F, 0.4, "GND"); B.via(px, py + dy, "GND")
+
     # ------------------------------------------------------------ zones (GND)
     outline = [(0, 0), (W, 0), (W, H), (0, H)]
     B.zone(outline, F, "GND", "GND_top")
