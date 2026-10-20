@@ -7,11 +7,14 @@
 | 64 | C1..C64 (64) | 100nF | CL10B104KB8NNNC | C_0603_1608Metric | C14663 | LED decoupling |
 | 1 | U1 | ESP32-WROOM-32E | ESP32-WROOM-32E-N4 | ESP32-WROOM-32 | C701341 | ESP32 WiFi/BLE module (4 MB flash) |
 | 3 | C65,C68,C69 | 10uF |  | C_0805_2012Metric | C15850 | ESP32 3V3 bulk |
-| 5 | C66,C74,C71,C72,C73 | 100nF |  | C_0603_1608Metric | C14663 | ESP32 3V3 decoupling |
-| 12 | R19..R22 (12) | 10k |  | R_0603_1608Metric | C25804 | EN pull-up |
+| 5 | C66,C71,C72,C74,C73 | 100nF |  | C_0603_1608Metric | C14663 | ESP32 3V3 decoupling |
+| 12 | R19..R16 (12) | 10k |  | R_0603_1608Metric | C25804 | EN pull-up |
 | 1 | C67 | 1uF |  | C_0603_1608Metric | C15849 | EN reset delay |
 | 1 | SW1 | RESET | TS-1187A-B-A-B | SW_SPST_TL3342 | C318884 | Reset button |
 | 1 | SW2 | BOOT | TS-1187A-B-A-B | SW_SPST_TL3342 | C318884 | Boot button |
+| 1 | U2 | AMS1117-3.3 | AMS1117-3.3 | SOT-223-3_TabPin2 | C6186 | 3.3V 1A LDO |
+| 1 | U3 | CH340C | CH340C | SOIC-16_3.9x9.9mm_P1.27mm | C84681 | USB to UART (no crystal needed) |
+| 2 | Q9,Q10 | S8050 | S8050 | SOT-23 | C2146 | Auto-reset |
 | 1 | U5 | 74AHCT1G125 | SN74AHCT1G125DBVR | SOT-23-5 | TBD | WS2812B data level shifter |
 | 1 | R23 | 330 |  | R_0603_1608Metric | C23138 | LED data series |
 | 1 | J1 | USB-C | TYPE-C-31-M-12 | USB_C_Receptacle_HRO_TYPE-C-31-M-12 | C165948 | USB-C receptacle 16P |
@@ -19,10 +22,7 @@
 | 1 | F1 | 3A PTC | MF-MSMF300-2 / BSMD1812-300 | Fuse_1812_4532Metric | TBD | Resettable fuse 3A hold (USB path) |
 | 1 | J2 | 5V IN | B2B-XH-A | JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical | C158012 | External 5V/4A input (optional, bypasses fuse) |
 | 2 | C75,C76 | 470uF 10V | 470uF/10V SMD 8x10 | CP_Elec_8x10 | TBD | 5V bulk capacitor |
-| 1 | U2 | AMS1117-3.3 | AMS1117-3.3 | SOT-223-3_TabPin2 | C6186 | 3.3V 1A LDO |
 | 1 | DL1 | PWR |  | LED_0603_1608Metric | C72043 | Power LED (green) |
 | 9 | R24..R8 (9) | 1k |  | R_0603_1608Metric | C21190 | Power LED series |
-| 1 | U3 | CH340C | CH340C | SOIC-16_3.9x9.9mm_P1.27mm | C84681 | USB to UART (no crystal needed) |
-| 2 | Q9,Q10 | S8050 | S8050 | SOT-23 | C2146 | Auto-reset |
 | 1 | U4 | 74HCT595 | SN74HCT595DR / 74HCT595D | SOIC-16_3.9x9.9mm_P1.27mm | TBD | Column shift register (HCT = 3.3V-input compatible) |
 | 8 | Q1..Q8 (8) | S8550 | S8550 | SOT-23 | C2150 | Column a high-side PNP switch |

@@ -393,7 +393,7 @@ def build(out_path):
 
     # every 2-pad SMD part in the strip with a GND pad gets its own GND via (stub away from the other pad),
     # so decoupling caps / pull-downs never end up on a pour island after autorouting
-    for p in parts:
+    for p in (parts if D.VARIANT == "module" else []):   # the nodemcu strip routes better without them
         if p.ref[0] in "HDC" and p.ref[1:].isdigit() and int(p.ref[1:]) <= 64:
             continue
         if len(p.pins) != 2 or "GND" not in p.pins.values() or not p.footprint.split(":")[1].startswith(("C_", "R_", "LED_")):
