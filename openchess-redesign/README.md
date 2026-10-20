@@ -120,6 +120,21 @@ The build verifies the schematic netlist against the model
   around it; leave that area of the enclosure free of metal.
 - Mounting holes: 7 x M3.
 
+## DRC status
+
+Both variants pass KiCad DRC with 0 errors and 0 unconnected items
+(`hardware*/openchess-board*_drc.rpt`). The remaining entries in the reports
+are warnings: "library footprint" notices (the headless build has no
+fp-lib-table), silkscreen overlaps of reference designators, and a few
+"track dangling" notes where the autorouter joined a pre-routed stub mid-way.
+
+Build pipeline per variant: `gen_sch.py` -> `verify_netlist.py` -> `gen_pcb.py`
+(scripted matrix routing + pre-routed power/USB/ground stubs) -> `route.py`
+(Freerouting for the strip, own `.ses` importer) -> `gnd_repair.py` (adds vias
+for ground pour islands, bridges split ground clusters) -> `drc.py` ->
+`export.py`. `reroute_nets.py NET...` locks everything else and lets the
+router redo single nets.
+
 ## Known limitations / to verify
 
 - LCSC numbers were filled from memory and are flagged; verify each one in
