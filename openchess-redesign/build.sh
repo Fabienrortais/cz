@@ -25,7 +25,7 @@ for V in ${VARIANTS:-module nodemcu}; do
   $PY tools/verify_netlist.py hardware$SUF/openchess-board$SUF.kicad_sch build/$V/netlist.xml
   $PY tools/gen_pcb.py
   if [[ -n "$JAR" && "${2:-}" != "--no-route" ]]; then
-    $PY tools/route.py "$PCB" "$JAR" --passes 30
+    $PY tools/route.py "$PCB" "$JAR" --passes ${PASSES:-12}
   fi
   $PY tools/gnd_repair.py "$PCB"
   $PY tools/drc.py "$PCB" hardware$SUF/openchess-board${SUF}_drc.rpt --save
