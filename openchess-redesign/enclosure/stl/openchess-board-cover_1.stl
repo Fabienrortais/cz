@@ -1,0 +1,226 @@
+solid OpenSCAD_Model
+  facet normal 1 -0 0
+    outer loop
+      vertex 342.5 332 14
+      vertex 342.5 376.5 3
+      vertex 342.5 376.5 14
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 342.5 376.5 3
+      vertex 342.5 332 14
+      vertex 342.5 332 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 340 374 3
+      vertex 342.5 332 3
+      vertex 340 332 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 342.5 332 3
+      vertex 340 374 3
+      vertex 342.5 376.5 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 376.5 3
+      vertex 340 374 3
+      vertex 170 374 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 340 374 3
+      vertex 170 376.5 3
+      vertex 342.5 376.5 3
+    endloop
+  endfacet
+  facet normal 0 1 -0
+    outer loop
+      vertex 342.5 376.5 3
+      vertex 170 376.5 14
+      vertex 342.5 376.5 14
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 170 376.5 14
+      vertex 342.5 376.5 3
+      vertex 170 376.5 3
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 340 332 9
+      vertex 170 332 14
+      vertex 170 332 9
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 170 332 14
+      vertex 340 332 9
+      vertex 342.5 332 14
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 342.5 332 3
+      vertex 340 332 9
+      vertex 340 332 3
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 340 332 9
+      vertex 342.5 332 3
+      vertex 342.5 332 14
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 340 374 3
+      vertex 340 334 9
+      vertex 340 374 12
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 340 332 3
+      vertex 340 334 9
+      vertex 340 374 3
+    endloop
+  endfacet
+  facet normal -1 -0 0
+    outer loop
+      vertex 340 334 9
+      vertex 340 332 3
+      vertex 340 332 9
+    endloop
+  endfacet
+  facet normal -1 -0 0
+    outer loop
+      vertex 340 374 12
+      vertex 340 334 9
+      vertex 340 334 12
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 170 374 3
+      vertex 340 374 12
+      vertex 170 374 12
+    endloop
+  endfacet
+  facet normal 0 -1 -0
+    outer loop
+      vertex 340 374 12
+      vertex 170 374 3
+      vertex 340 374 3
+    endloop
+  endfacet
+  facet normal -0 0 1
+    outer loop
+      vertex 170 376.5 14
+      vertex 342.5 332 14
+      vertex 342.5 376.5 14
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 342.5 332 14
+      vertex 170 376.5 14
+      vertex 170 332 14
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 334 12
+      vertex 340 374 12
+      vertex 340 334 12
+    endloop
+  endfacet
+  facet normal -0 0 -1
+    outer loop
+      vertex 340 374 12
+      vertex 170 334 12
+      vertex 170 374 12
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 332 9
+      vertex 340 334 9
+      vertex 340 332 9
+    endloop
+  endfacet
+  facet normal -0 0 -1
+    outer loop
+      vertex 340 334 9
+      vertex 170 332 9
+      vertex 170 334 9
+    endloop
+  endfacet
+  facet normal 0 1 -0
+    outer loop
+      vertex 340 334 9
+      vertex 170 334 12
+      vertex 340 334 12
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 170 334 12
+      vertex 340 334 9
+      vertex 170 334 9
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 334 9
+      vertex 170 332 9
+      vertex 170 334 12
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 374 12
+      vertex 170 376.5 3
+      vertex 170 374 3
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 376.5 3
+      vertex 170 374 12
+      vertex 170 376.5 14
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 332 14
+      vertex 170 374 12
+      vertex 170 334 12
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 374 12
+      vertex 170 332 14
+      vertex 170 376.5 14
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 332 14
+      vertex 170 334 12
+      vertex 170 332 9
+    endloop
+  endfacet
+endsolid OpenSCAD_Model

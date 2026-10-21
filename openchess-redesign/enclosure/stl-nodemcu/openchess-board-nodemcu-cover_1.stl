@@ -1,0 +1,366 @@
+solid OpenSCAD_Model
+  facet normal 1 -0 0
+    outer loop
+      vertex 342.5 332 18
+      vertex 342.5 390.5 3
+      vertex 342.5 390.5 18
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 342.5 390.5 3
+      vertex 342.5 332 18
+      vertex 342.5 332 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 340 388 3
+      vertex 342.5 332 3
+      vertex 340 332 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 342.5 332 3
+      vertex 340 388 3
+      vertex 342.5 390.5 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 390.5 3
+      vertex 340 388 3
+      vertex 170 388 3
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 340 388 3
+      vertex 170 390.5 3
+      vertex 342.5 390.5 3
+    endloop
+  endfacet
+  facet normal 0 1 -0
+    outer loop
+      vertex 342.5 390.5 3
+      vertex 170 390.5 18
+      vertex 342.5 390.5 18
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 170 390.5 18
+      vertex 342.5 390.5 3
+      vertex 170 390.5 3
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 340 332 13
+      vertex 170 332 18
+      vertex 170 332 13
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 170 332 18
+      vertex 340 332 13
+      vertex 342.5 332 18
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 342.5 332 3
+      vertex 340 332 13
+      vertex 340 332 3
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 340 332 13
+      vertex 342.5 332 3
+      vertex 342.5 332 18
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 340 388 3
+      vertex 340 334 13
+      vertex 340 388 16
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 340 332 3
+      vertex 340 334 13
+      vertex 340 388 3
+    endloop
+  endfacet
+  facet normal -1 -0 0
+    outer loop
+      vertex 340 334 13
+      vertex 340 332 3
+      vertex 340 332 13
+    endloop
+  endfacet
+  facet normal -1 -0 0
+    outer loop
+      vertex 340 388 16
+      vertex 340 334 13
+      vertex 340 334 16
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 170 388 3
+      vertex 340 388 16
+      vertex 170 388 16
+    endloop
+  endfacet
+  facet normal 0 -1 -0
+    outer loop
+      vertex 340 388 16
+      vertex 170 388 3
+      vertex 340 388 3
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 342.5 390.5 18
+      vertex 330 352 18
+      vertex 342.5 332 18
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 342.5 390.5 18
+      vertex 310 352 18
+      vertex 330 352 18
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 170 332 18
+      vertex 310 352 18
+      vertex 170 390.5 18
+    endloop
+  endfacet
+  facet normal -0 0 1
+    outer loop
+      vertex 170 390.5 18
+      vertex 310 352 18
+      vertex 342.5 390.5 18
+    endloop
+  endfacet
+  facet normal -0 0 1
+    outer loop
+      vertex 330 340 18
+      vertex 342.5 332 18
+      vertex 330 352 18
+    endloop
+  endfacet
+  facet normal -0 0 1
+    outer loop
+      vertex 310 340 18
+      vertex 342.5 332 18
+      vertex 330 340 18
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 310 340 18
+      vertex 170 332 18
+      vertex 342.5 332 18
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 310 352 18
+      vertex 170 332 18
+      vertex 310 340 18
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 330 352 16
+      vertex 340 334 16
+      vertex 330 340 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 340 334 16
+      vertex 310 340 16
+      vertex 330 340 16
+    endloop
+  endfacet
+  facet normal -0 0 -1
+    outer loop
+      vertex 310 340 16
+      vertex 170 334 16
+      vertex 310 352 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 334 16
+      vertex 310 340 16
+      vertex 340 334 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 340 334 16
+      vertex 330 352 16
+      vertex 340 388 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 310 352 16
+      vertex 340 388 16
+      vertex 330 352 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 388 16
+      vertex 310 352 16
+      vertex 170 334 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 310 352 16
+      vertex 170 388 16
+      vertex 340 388 16
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 170 332 13
+      vertex 340 334 13
+      vertex 340 332 13
+    endloop
+  endfacet
+  facet normal -0 0 -1
+    outer loop
+      vertex 340 334 13
+      vertex 170 332 13
+      vertex 170 334 13
+    endloop
+  endfacet
+  facet normal 0 1 -0
+    outer loop
+      vertex 340 334 13
+      vertex 170 334 16
+      vertex 340 334 16
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 170 334 16
+      vertex 340 334 13
+      vertex 170 334 13
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 330 340 16
+      vertex 330 352 18
+      vertex 330 352 16
+    endloop
+  endfacet
+  facet normal -1 -0 0
+    outer loop
+      vertex 330 352 18
+      vertex 330 340 16
+      vertex 330 340 18
+    endloop
+  endfacet
+  facet normal 1 -0 0
+    outer loop
+      vertex 310 340 18
+      vertex 310 352 16
+      vertex 310 352 18
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 310 352 16
+      vertex 310 340 18
+      vertex 310 340 16
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 310 352 16
+      vertex 330 352 18
+      vertex 310 352 18
+    endloop
+  endfacet
+  facet normal 0 -1 -0
+    outer loop
+      vertex 330 352 18
+      vertex 310 352 16
+      vertex 330 352 16
+    endloop
+  endfacet
+  facet normal 0 1 -0
+    outer loop
+      vertex 330 340 16
+      vertex 310 340 18
+      vertex 330 340 18
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 310 340 18
+      vertex 330 340 16
+      vertex 310 340 16
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 334 13
+      vertex 170 332 13
+      vertex 170 334 16
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 388 16
+      vertex 170 390.5 3
+      vertex 170 388 3
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 390.5 3
+      vertex 170 388 16
+      vertex 170 390.5 18
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 332 18
+      vertex 170 388 16
+      vertex 170 334 16
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 388 16
+      vertex 170 332 18
+      vertex 170 390.5 18
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 170 332 18
+      vertex 170 334 16
+      vertex 170 332 13
+    endloop
+  endfacet
+endsolid OpenSCAD_Model

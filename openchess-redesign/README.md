@@ -111,6 +111,25 @@ The build verifies the schematic netlist against the model
 3. Run the calibration (serial monitor, 115200 baud) once: it learns the LED
    order and the row/column mapping.
 
+## Printable enclosure
+
+`enclosure/enclosure.scad` (OpenSCAD) builds a tray, a 4-piece top plate and a
+2-piece controller-strip cover from the same parameters as the PCB
+(`tools/gen_enclosure.py` writes `enc_params.scad` and renders the STLs into
+`enclosure/stl/` for the module variant and `enclosure/stl-nodemcu/` for the
+NodeMCU variant). Every piece is under 175 x 195 mm, so all fit a 256 mm bed
+(Bambu A1 or similar):
+
+| Part | Pieces | Print orientation / notes |
+|---|---|---|
+| `top_q00`, `top_q10`, `top_q01`, `top_q11` | 4 quadrants of the playing surface, 4 mm thick | Print playing face DOWN on the bed: the 12.4 mm iron-disc pockets and 9 mm LED pockets then open upwards and need no supports; 0.8 mm skin stays above each LED. Light/white filament lets the LEDs shine through. Grooves mark the squares, coordinates are engraved in the margins. |
+| `tray_00` .. `tray_11` | 4 pieces of the base tray | Flat, no supports. M3 screws go up through the countersunk floor holes into the top plate. |
+| `cover_0`, `cover_1` | 2 halves of the strip cover | Print top down. Openings for USB-C (in the tray wall), J2 cable, buttons/LED (module) or the dev board's USB (NodeMCU). |
+
+Glue the quadrant joints (they fall on square edges) or add tape underneath.
+Iron discs are glued into the pockets from below; magnets go in the pieces
+with the S pole down, as upstream.
+
 ## Mechanical notes
 
 - Top plate: anything 3-6 mm thick with a 12.2 mm x 1.2 mm pocket for the iron
