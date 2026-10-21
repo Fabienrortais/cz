@@ -18,6 +18,9 @@ def params():
         "MH = [" + ", ".join(f"[{x}, {y}]" for x, y in mh) + "];",
         f"J1_X = {parts['J1'].x}; J2_X = {parts['J2'].x + 1.25}; J2_Y = {parts['J2'].y};",
         f"DL1_X = {parts['DL1'].x}; DL1_Y = {parts['DL1'].y};",
+        f"BATTERY = {'true' if D.BATTERY else 'false'};",
+        (f"J5_X = {parts['J5'].x + 1.0}; J5_Y = {parts['J5'].y}; SW3_X = {parts['SW3'].x}; SW3_Y = {parts['SW3'].y}; JP1_X = {parts['JP1'].x + 2.54}; JP1_Y = {parts['JP1'].y};"
+         if D.BATTERY else "J5_X = 0; J5_Y = 0; SW3_X = 0; SW3_Y = 0; JP1_X = 0; JP1_Y = 0;"),
     ]
     if D.VARIANT == "module":
         lines += [f"SW1_X = {parts['SW1'].x}; SW1_Y = {parts['SW1'].y}; SW2_X = {parts['SW2'].x}; SW2_Y = {parts['SW2'].y};",

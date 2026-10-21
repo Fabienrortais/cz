@@ -109,6 +109,11 @@ module cover_full() {
         if (VARIANT == "module") for (p = [[SW1_X, SW1_Y], [SW2_X, SW2_Y]]) translate([p[0], p[1], 0]) cylinder(d = 4.5, h = 100);
         if (VARIANT == "nodemcu") translate([DEV_USB_X0, DEV_USB_Y0, 0]) cube([DEV_USB_X1 - DEV_USB_X0, DEV_USB_Y1 - DEV_USB_Y0, 100]);
         if (VARIANT == "nodemcu") translate([W - 30, STRIP_Y + 8, 0]) cube([20, 12, 100]);                     // ventilation / access
+        if (BATTERY) {
+            translate([J5_X - 6, J5_Y - 6, 0]) cube([12, 12, 100]);                                             // battery cable
+            translate([SW3_X, SW3_Y, 0]) cylinder(d = 4.5, h = 100);                                            // power key
+            translate([JP1_X - 6, JP1_Y - 5, 0]) cube([12, 10, 100]);                                           // jumper access
+        }
     }
 }
 module cover_piece(ix) {

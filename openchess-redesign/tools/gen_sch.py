@@ -79,6 +79,31 @@ def hall_symbol():
                pin("open_collector", 7.62, 0, 180, "OUT", pn["OUT"]),
                pin("power_in", 0, -7.62, 90, "GND", pn["GND"])))
 
+def ip5306_symbol():
+    def pin(kind, x, y, a, name, num):
+        return S(sym("pin"), sym(kind), sym("line"), S(sym("at"), x, y, a), S(sym("length"), 2.54),
+                 S(sym("name"), name, S(sym("effects"), S(sym("font"), S(sym("size"), 1.27, 1.27)))),
+                 S(sym("number"), num, S(sym("effects"), S(sym("font"), S(sym("size"), 1.27, 1.27)))))
+    fx = S(sym("effects"), S(sym("font"), S(sym("size"), 1.27, 1.27)))
+    fxh = S(sym("effects"), S(sym("font"), S(sym("size"), 1.27, 1.27)), sym("hide"))
+    return S(sym("symbol"), "OpenChess:IP5306", S(sym("pin_names"), S(sym("offset"), 1.016)),
+             S(sym("in_bom"), sym("yes")), S(sym("on_board"), sym("yes")),
+             S(sym("property"), "Reference", "U", S(sym("at"), 0, 11.43, 0), fx),
+             S(sym("property"), "Value", "IP5306", S(sym("at"), 0, -11.43, 0), fx),
+             S(sym("property"), "Footprint", "Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm_ThermalVias", S(sym("at"), 0, 0, 0), fxh),
+             S(sym("property"), "Datasheet", "", S(sym("at"), 0, 0, 0), fxh),
+             S(sym("property"), "ki_description", "Injoinic IP5306 Li-ion charger + 5 V boost, ESOP-8", S(sym("at"), 0, 0, 0), fxh),
+             S(sym("symbol"), "IP5306_0_1",
+               S(sym("rectangle"), S(sym("start"), -7.62, 8.89), S(sym("end"), 7.62, -8.89),
+                 S(sym("stroke"), S(sym("width"), 0.254), S(sym("type"), sym("default"))),
+                 S(sym("fill"), S(sym("type"), sym("background"))))),
+             S(sym("symbol"), "IP5306_1_1",
+               pin("power_in", -10.16, 5.08, 0, "VIN", "1"), pin("open_collector", -10.16, 2.54, 0, "LED1", "2"),
+               pin("open_collector", -10.16, 0, 0, "LED2", "3"), pin("open_collector", -10.16, -2.54, 0, "LED3", "4"),
+               pin("input", 10.16, -5.08, 180, "KEY", "5"), pin("passive", 10.16, 0, 180, "BAT", "6"),
+               pin("passive", 10.16, 2.54, 180, "L1", "7"), pin("power_out", 10.16, 5.08, 180, "VOUT", "8"),
+               pin("power_in", 0, -11.43, 90, "GND", "9")))
+
 def symbol_pins(symdef):
     """-> {number: (x, y, angle, name)} from all sub-units."""
     pins = {}
@@ -104,6 +129,8 @@ class Sch:
             return self.libsyms[lib_id]
         if lib_id == "OpenChess:HALL_SWITCH_SOT23":
             s = hall_symbol()
+        elif lib_id == "OpenChess:IP5306":
+            s = ip5306_symbol()
         else:
             lib, name = lib_id.split(":", 1)
             s = flatten(lib, name)
@@ -282,6 +309,10 @@ def build():
         place[f"MH{i+1}"] = (720 + 12 * i, 300)
     if "J3" in byref:
         place["J3"] = (300, 100); place["J4"] = (340, 100)
+    if "U6" in byref:
+        place.update({"U6": (725, 80), "L1": (760, 60), "C77": (700, 125), "C78": (730, 125), "C79": (760, 125),
+                      "J5": (800, 80), "JP1": (690, 80), "SW3": (800, 125)})
+        sch.text("OPTIONAL BATTERY: IP5306 charges a 1S Li-ion from VUSB5 and boosts it to 5 V. JP1 1-2 = USB direct, 2-3 = battery/boost.", 680, 45, 1.5)
     for ref, (x, y) in place.items():
         if ref in byref:
             sch.part(byref[ref], x, y)

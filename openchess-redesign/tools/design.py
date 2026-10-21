@@ -21,6 +21,10 @@ import os as _os
 # VARIANT "nodemcu" : two 19-pin sockets for a plug-in 38-pin dev board (NodeMCU-32S, ESP32 DevKitC V4, ...)
 VARIANT = _os.environ.get("OPENCHESS_VARIANT", "module")
 PROJECT = "openchess-board" + ("" if VARIANT == "module" else "-" + VARIANT)
+# Optional Li-ion battery block (IP5306 charger + 5 V boost, JST-PH battery, 3-pin power-select jumper).
+# Set OPENCHESS_BATTERY=0 to leave it out entirely (JP1 then disappears and the fuse feeds the bus directly).
+BATTERY = _os.environ.get("OPENCHESS_BATTERY", "1") != "0"
+BATTERY_REFS = ("U6", "L1", "C77", "C78", "C79", "J5", "JP1", "SW3")
 OUT_SUFFIX = "" if VARIANT == "module" else "-" + VARIANT
 
 PITCH = 40.0        # square pitch in mm (upstream OpenChess uses 33.33 mm, 30 LED/m strip)
@@ -272,8 +276,32 @@ def build_parts() -> List[Part]:
     P.append(Part(ref="R18", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="5.1k",
                   pins={"1": "CC2", "2": "GND"}, x=87.0, y=H - 8.0, rot=0, lcsc="C23186", desc="USB CC2 pull-down"))
     P.append(Part(ref="F1", symbol="Device:Polyfuse", footprint="Fuse:Fuse_1812_4532Metric", value="3A PTC",
-                  pins={"1": "VBUS", "2": "+5V"}, x=99.0, y=H - 11.0, rot=90, lcsc="", mpn="MF-MSMF300-2 / BSMD1812-300",
-                  desc="Resettable fuse 3A hold (USB path)"))
+                  pins={"1": "VBUS", "2": "VUSB5" if BATTERY else "+5V"}, x=99.0, y=H - 11.0, rot=90, lcsc="",
+                  mpn="MF-MSMF300-2 / BSMD1812-300", desc="Resettable fuse 3A hold (USB path)"))
+    if BATTERY:
+        # IP5306: 5 V in -> charges a 1S Li-ion; boosts the battery to 5 V / 2.4 A on VOUT. JP1 selects the bus source.
+        P.append(Part(ref="U6", symbol="OpenChess:IP5306", footprint="Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm_ThermalVias",
+                      value="IP5306", pins={"1": "VUSB5", "2": "NC_LED1", "3": "NC_LED2", "4": "NC_LED3", "5": "KEY", "6": "BAT",
+                                            "7": "LX", "8": "VBOOST", "9": "GND"},
+                      x=232.0, y=H - 16.0, rot=0, lcsc="C181692", mpn="IP5306", desc="Li-ion charger (2.1 A) + 5 V boost (2.4 A), power-bank IC"))
+        P.append(Part(ref="L1", symbol="Device:L", footprint="Inductor_SMD:L_Taiyo-Yuden_NR-60xx", value="1uH 4A",
+                      pins={"1": "LX", "2": "BAT"}, x=242.0, y=H - 16.6, rot=0, lcsc="", mpn="NR6028T1R0N / CD63 1uH >=4A",
+                      desc="Boost inductor 1 uH, >= 4 A sat, 6x6 mm"))
+        P.append(Part(ref="C77", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="22uF",
+                      pins={"1": "VUSB5", "2": "GND"}, x=226.3, y=H - 21.5, rot=90, lcsc="C45783", desc="IP5306 VIN cap"))
+        P.append(Part(ref="C78", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="22uF",
+                      pins={"1": "BAT", "2": "GND"}, x=252.0, y=H - 15.5, rot=90, lcsc="C45783", desc="IP5306 BAT cap"))
+        P.append(Part(ref="C79", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="22uF",
+                      pins={"1": "VBOOST", "2": "GND"}, x=242.0, y=H - 23.0, rot=0, lcsc="C45783", desc="IP5306 VOUT cap"))
+        P.append(Part(ref="J5", symbol="Connector_Generic:Conn_01x02", footprint="Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical",
+                      value="BATTERY", pins={"1": "BAT", "2": "GND"}, x=262.0, y=H - 5.0, rot=0, lcsc="C131337", mpn="B2B-PH-K-S",
+                      desc="1S Li-ion / LiPo battery, JST-PH 2.0 mm (+ on pin 1, check your pack!)"))
+        P.append(Part(ref="JP1", symbol="Connector_Generic:Conn_01x03", footprint="Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+                      value="PWR SEL", pins={"1": "VUSB5", "2": "+5V", "3": "VBOOST"}, x=193.46, y=H - 8.5, rot=90, lcsc="C2337",
+                      mpn="1x3 header + jumper", desc="Power select: 1-2 = USB direct (no battery), 2-3 = battery/boost (IP5306)"))
+        P.append(Part(ref="SW3", symbol="Switch:SW_Push", footprint="Button_Switch_SMD:SW_SPST_TL3342", value="PWR",
+                      pins={"1": "KEY", "2": "GND"}, x=276.0, y=H - 6.0, rot=0, lcsc="C318884", mpn="TS-1187A-B-A-B",
+                      desc="IP5306 KEY: short press = boost on, long press = off"))
     P.append(Part(ref="J2", symbol="Connector_Generic:Conn_01x02", footprint="Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
                   value="5V IN", pins={"1": "+5V", "2": "GND"}, x=118.0, y=H - 5.0, rot=0, lcsc="C158012",
                   mpn="B2B-XH-A", desc="External 5V/4A input (optional, bypasses fuse)"))

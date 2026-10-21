@@ -28,6 +28,24 @@ replacing the hand-wired "plastic PCB" + perfboard with one assembled board.
 - GPIO map = upstream defaults, so the firmware needs no changes:
   LED IO32, SR SER IO33, SRCLK IO14, RCLK IO26, rows IO4,16,17,18,19,21,22,23.
 
+## Optional battery (both variants)
+
+An IP5306 power-bank IC (Injoinic, LCSC C181692) charges a single Li-ion /
+LiPo cell from the USB-C input (2.1 A) and boosts it to 5 V (2.4 A max) for
+the board. It is selected with the 3-pin jumper **JP1**:
+
+| JP1 | Bus fed from | Use |
+|---|---|---|
+| 1-2 | fuse output (USB-C or J2 directly) | no battery fitted; U6/L1/C77-C79/J5/SW3 can be left unpopulated |
+| 2-3 | IP5306 VOUT (battery boost, pass-through while charging) | battery fitted on J5 (JST-PH 2.0 mm, + on pin 1) |
+
+SW3 is the IP5306 key (short press on, long press off, it also turns off by
+itself below about 45 mA, which the ESP32 never reaches). Power budget: the
+boost delivers 2.4 A, so with the battery keep the LED brightness moderate
+(all 64 LEDs full white need 3.8 A); a 3000 mAh cell runs the board for
+roughly 6-8 h of normal play. Set `OPENCHESS_BATTERY=0` before building to
+remove the block entirely.
+
 ## Two variants
 
 | Variant | Controller | Output folders | Use when |

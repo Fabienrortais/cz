@@ -297,12 +297,15 @@ def build(out_path):
     B.track(cxa + D.COL_DX + 0.95, Ys + 2.0, cxh + D.BUS_DX, Ys + 2.0, Bk, D.W_MAINBUS, "+5V")   # from Q1 emitter via to the h bus
     # power entry: B.Cu 3 mm from the bus down to 3 vias, then F.Cu bar to the fuse (+5V side)
     f2 = B.pad("F1", "2"); f1 = B.pad("F1", "1")
-    ey = f2[1] - 2.36
-    B.track(99.0, Ys + 2.0, 99.0, ey, Bk, 3.0, "+5V")
-    for vx in (97.5, 99.0, 100.5):
-        B.via(vx, ey, "+5V", 0.8, 0.4)
-    B.track(97.5, ey, 100.5, ey, F, 1.5, "+5V")
-    B.track(99.0, ey, f2[0], f2[1], F, 1.5, "+5V")
+    if not D.BATTERY:
+        ey = f2[1] - 2.36
+        B.track(99.0, Ys + 2.0, 99.0, ey, Bk, 3.0, "+5V")
+        for vx in (97.5, 99.0, 100.5):
+            B.via(vx, ey, "+5V", 0.8, 0.4)
+        B.track(97.5, ey, 100.5, ey, F, 1.5, "+5V")
+        B.track(99.0, ey, f2[0], f2[1], F, 1.5, "+5V")
+    else:
+        route_battery_block(B, f2, Ys, H)
     # USB VBUS: thin stubs out of the 0.5 mm pad row, then a 0.8 mm B.Cu run under the connector to the fuse.
     vb = sorted({round(B.pad("J1", n)[0], 3) for n in ("A4", "A9", "B4", "B9")})
     vy = B.pad("J1", "A4")[1]
@@ -335,9 +338,12 @@ def build(out_path):
             B.track(fx, y2, fx, y2 - 2.5, F, 0.2, "USB_D+")
         B.track(dp[0], y2 - 2.5, dp[1], y2 - 2.5, F, 0.3, "USB_D+")
         B.track(dp[1], y2 - 2.5, dp[1], y2 - 3.5, F, 0.3, "USB_D+")
-    # external 5V input J2 -> +5V (fuse output side)
+    # external 5V input J2 -> +5V: to the fuse output (no battery block) or straight up into the bus (B.Cu)
     j2 = B.pad("J2", "1")
-    B.poly([j2, (j2[0], f2[1]), f2], F, 1.0, "+5V")
+    if not D.BATTERY:
+        B.poly([j2, (j2[0], f2[1]), f2], F, 1.0, "+5V")
+    else:
+        B.track(j2[0], j2[1], j2[0], Ys + 2.0, Bk, 2.0, "+5V")
 
     # LEDs: VDD stubs + vias to the bus, caps, data links
     order = D.led_chain_order()
@@ -393,7 +399,7 @@ def build(out_path):
 
     # every 2-pad SMD part in the strip with a GND pad gets its own GND via (stub away from the other pad),
     # so decoupling caps / pull-downs never end up on a pour island after autorouting
-    for p in (parts if D.VARIANT == "module" else []):   # the nodemcu strip routes better without them
+    for p in (parts if D.VARIANT == "module" else [q for q in parts if q.ref in D.BATTERY_REFS]):   # nodemcu strip routes better without them
         if p.ref[0] in "HDC" and p.ref[1:].isdigit() and int(p.ref[1:]) <= 64:
             continue
         if len(p.pins) != 2 or "GND" not in p.pins.values() or not p.footprint.split(":")[1].startswith(("C_", "R_", "LED_")):
@@ -447,8 +453,7 @@ def build(out_path):
         cx, _ = D.sq_center(f, 0)
         B.via(cx + 15.0, Ys + 16.3, "GND")
         B.via(cx, 4.0, "GND")
-    for x in (66, 90, 108, 150, 190, 210, 230, 250, 270, 290, 310):
-        B.via(x, H - 2.5, "GND")
+    B.stitch_grid([66, 90, 108, 150, 170, 190, 210, 230, 250, 270, 290, 310], [H - 2.5], "GND", keep=0.3)
     for y in range(40, int(Ys) - 20, 40):
         B.via(W - 5.0, y + 20, "GND")
     if D.VARIANT == "module":
@@ -466,9 +471,14 @@ def build(out_path):
             B.text(D.sq_name(f, r), cx - 16.5, cy - 16.0, 2.0)
             B.line(cx - D.PITCH / 2, cy - D.PITCH / 2, cx + D.PITCH / 2, cy - D.PITCH / 2, w=0.1)
             B.line(cx - D.PITCH / 2, cy - D.PITCH / 2, cx - D.PITCH / 2, cy + D.PITCH / 2, w=0.1)
-    B.text(f"OpenChess PCB redesign v1.0 ({D.VARIANT}) - 8x8 Hall + WS2812B, firmware-compatible with joojoooo/OpenChess", 265, H - 11.0, 1.8)
-    B.text("GPIO: LED IO32 | SR SER IO33 SRCLK IO14 RCLK IO26 | ROW1..8 = IO4,16,17,18,19,21,22,23", 265, H - 8.0, 1.2)
-    B.text("Column drivers are PNP: set SR_INVERT_OUTPUTS = PNP in the WebUI. J1 USB-C 5V/3A (fused) | J2 ext 5V 4A", 265, H - 5.5, 1.2)
+    B.text(f"OpenChess PCB v1.0 ({D.VARIANT})", 316, H - 13.5, 1.5)
+    B.text("LED IO32 | SER IO33 SRCLK IO14 RCLK IO26", 316, H - 11.0, 1.0)
+    B.text("ROW1..8 = IO4,16,17,18,19,21,22,23", 316, H - 8.8, 1.0)
+    B.text("SR_INVERT_OUTPUTS = PNP (WebUI)", 316, H - 6.6, 1.0)
+    B.text("J1 USB-C 5V/3A | J2 5V/4A in", 316, H - 4.4, 1.0)
+    if D.BATTERY:
+        B.text("JP1: 1-2 USB  2-3 BATTERY", 196, H - 12.0, 1.0)
+        B.text("BAT 1S Li-ion  + left", 263, H - 10.5, 1.0)
     B.text("iron disc 12 mm centred on circle; magnet S-pole down", 60, 7.0, 1.5)
     if D.VARIANT == "module":
         B.text("ANTENNA - keep clear", 20, H - 4.5, 1.0, layer=pcbnew.B_SilkS)
@@ -480,6 +490,42 @@ def build(out_path):
     pcbnew.SaveBoard(out_path, B.b)
     set_page(out_path)
     return B
+
+
+def route_battery_block(B, f2, Ys, H):
+    """Pre-route the power paths of the optional IP5306 block with wide tracks (the autorouter would use 0.3 mm)."""
+    F, Bk = pcbnew.F_Cu, pcbnew.B_Cu
+    jp1, jp2, jp3 = B.pad("JP1", "1"), B.pad("JP1", "2"), B.pad("JP1", "3")
+    # +5V bus <- JP1 pin 2: B.Cu 3 mm straight up into the main bus (the file-e vertical bus sits on the same x)
+    B.track(jp2[0], Ys + 2.0, jp2[0], jp2[1] - 3.0, Bk, 3.0, "+5V")
+    B.track(jp2[0], jp2[1] - 3.0, jp2[0], jp2[1], Bk, 1.0, "+5V")      # thin last bit between the 2.54 mm header pins
+    # VUSB5: fuse -> along the bottom margin -> JP1 pin 1 -> IP5306 VIN (+ C77)
+    yb = H - 2.2
+    vin = B.pad("U6", "1"); c77 = B.pad("C77", "1")
+    B.poly([f2, (f2[0] + 4.0, f2[1]), (f2[0] + 4.0, yb), (vin[0] - 3.0, yb), (vin[0] - 3.0, vin[1]), vin], F, 1.2, "VUSB5")
+    B.track(jp1[0], yb, jp1[0], jp1[1], F, 1.2, "VUSB5")
+    B.track(c77[0], c77[1], c77[0], vin[1], F, 0.8, "VUSB5")
+    # LX: U6 pin 7 -> L1 pad 1
+    p7 = B.pad("U6", "7"); l1 = B.pad("L1", "1"); l2 = B.pad("L1", "2")
+    B.track(p7[0], p7[1], l1[0], p7[1], F, 0.8, "LX")
+    # BAT: U6 pin 6 -> (below the inductor) -> L1 pad 2 -> C78 -> J5 pin 1
+    p6 = B.pad("U6", "6"); c78 = B.pad("C78", "1"); j5 = B.pad("J5", "1")
+    l1bb = B.fps["L1"].FindPadByNumber("1").GetBoundingBox()
+    yl = mm(l1bb.GetBottom()) + 1.2
+    bx = p6[0] + 1.8
+    B.poly([p6, (bx, p6[1]), (bx, p6[1] + 1.0)], F, 0.6, "BAT")
+    B.poly([(bx, p6[1] + 1.0), (bx, yl), (l2[0], yl), l2], F, 1.5, "BAT")
+    B.poly([(l2[0], yl), (c78[0], yl), (j5[0], yl), j5], F, 1.5, "BAT")
+    B.track(c78[0], c78[1], c78[0], yl, F, 1.0, "BAT")
+    # VBOOST: U6 pin 8 -> C79 -> JP1 pin 3
+    p8 = B.pad("U6", "8"); c79 = B.pad("C79", "1")
+    yt = H - 25.5
+    B.poly([p8, (p8[0] + 2.3, p8[1]), (p8[0] + 2.3, c79[1]), c79], F, 1.0, "VBOOST")
+    B.poly([(p8[0] + 2.3, c79[1]), (p8[0] + 2.3, yt), (jp3[0], yt), jp3], F, 1.5, "VBOOST")
+    # GND vias for the block's caps and the battery connector
+    for ref, pn, dx, dy in (("C77", "2", 0, -1.6), ("C78", "2", 0, -1.6), ("C79", "2", 1.6, 0), ("J5", "2", 0, -3.0)):
+        gx, gy = B.pad(ref, pn)
+        B.track(gx, gy, gx + dx, gy + dy, F, 0.4, "GND"); B.via(gx + dx, gy + dy, "GND")
 
 
 def write_project(path):
