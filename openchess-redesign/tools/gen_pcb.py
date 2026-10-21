@@ -81,7 +81,7 @@ class Builder:
         # reference text: smaller for the matrix parts
         if p.ref[0] in "HDC" and p.ref[1:].isdigit() and int(p.ref[1:]) <= 64:
             fp.Reference().SetVisible(False)
-        if p.ref in ("U1", "J1"):   # solid zone connection: ESP32 thermal pad, USB-C 0.5 mm GND pads
+        if p.ref in ("U1", "J1", "U4", "C73"):   # solid zone connection: ESP32 thermal pad, USB-C GND pads, 595 GND pins
             for pad in fp.Pads():
                 if p.pins.get(pad.GetNumber()) == "GND":
                     pad.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)

@@ -20,6 +20,12 @@
 | 1 | J1 | USB-C | TYPE-C-31-M-12 | USB_C_Receptacle_HRO_TYPE-C-31-M-12 | C165948 | USB-C receptacle 16P |
 | 2 | R17,R18 | 5.1k |  | R_0603_1608Metric | C23186 | USB CC1 pull-down |
 | 1 | F1 | 3A PTC | MF-MSMF300-2 / BSMD1812-300 | Fuse_1812_4532Metric | TBD | Resettable fuse 3A hold (USB path) |
+| 1 | U6 | IP5306 | IP5306 | HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm_ThermalVias | C181692 | Li-ion charger (2.1 A) + 5 V boost (2.4 A), power-bank IC |
+| 1 | L1 | 1uH 4A | NR6028T1R0N / CD63 1uH >=4A | L_Taiyo-Yuden_NR-60xx | TBD | Boost inductor 1 uH, >= 4 A sat, 6x6 mm |
+| 3 | C77,C78,C79 | 22uF |  | C_0805_2012Metric | C45783 | IP5306 VIN cap |
+| 1 | J5 | BATTERY | B2B-PH-K-S | JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical | C131337 | 1S Li-ion / LiPo battery, JST-PH 2.0 mm (+ on pin 1, check your pack!) |
+| 1 | JP1 | PWR SEL | 1x3 header + jumper | PinHeader_1x03_P2.54mm_Vertical | C2337 | Power select: 1-2 = USB direct (no battery), 2-3 = battery/boost (IP5306) |
+| 1 | SW3 | PWR | TS-1187A-B-A-B | SW_SPST_TL3342 | C318884 | IP5306 KEY: short press = boost on, long press = off |
 | 1 | J2 | 5V IN | B2B-XH-A | JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical | C158012 | External 5V/4A input (optional, bypasses fuse) |
 | 2 | C75,C76 | 470uF 10V | 470uF/10V SMD 8x10 | CP_Elec_8x10 | TBD | 5V bulk capacitor |
 | 1 | DL1 | PWR |  | LED_0603_1608Metric | C72043 | Power LED (green) |
