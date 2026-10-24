@@ -39,6 +39,8 @@ the board. It is selected with the 3-pin jumper **JP1**:
 | 1-2 | fuse output (USB-C or J2 directly) | no battery fitted; U6/L1/C77-C79/J5/SW3 can be left unpopulated |
 | 2-3 | IP5306 VOUT (battery boost, pass-through while charging) | battery fitted on J5 (JST-PH 2.0 mm, + on pin 1) |
 
+Without a battery: use the `-nobattery` BOM/CPL files (block unpopulated),
+jumper JP1 1-2, and power through USB-C or J2 as on a board without the block.
 SW3 is the IP5306 key (short press on, long press off, it also turns off by
 itself below about 45 mA, which the ESP32 never reaches). Power budget: the
 boost delivers 2.4 A, so with the battery keep the LED brightness moderate

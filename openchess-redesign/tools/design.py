@@ -70,7 +70,7 @@ CLEARANCE = 0.2
 # ----------------------------------------------------------------------------
 SENSOR = dict(
     value="HX3144ESO",                           # HUAXIN, unipolar, open-collector, 2.5-24 V, continuous-time
-    lcsc="",                                     # fill in from jlcpcb.com/parts (search "HX3144ESO")
+    lcsc="C558880",                              # JLCPCB/LCSC part (HUAXIN HX3144ESO, Bop 6-10 mT, Brp 4-8 mT)
     pins={"VCC": "1", "OUT": "2", "GND": "3"},   # HX3144ESO: 1=VCC 2=OUT(OC) 3=GND  (verify!)
     # Alternative examples (CHECK datasheet before use):
     #   Diodes AH3144E-SA, Allegro A1104 (SOT-23W)...  -> different pin order
@@ -227,9 +227,9 @@ def build_parts() -> List[Part]:
         P.append(Part(ref="C72", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
                       pins={"1": "CH_V3", "2": "GND"}, x=86.0, y=H - 26.0, rot=0, lcsc="C14663", desc="CH340 V3 decoupling"))
         P.append(Part(ref="Q9", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
-                      pins={"1": "DTR_R", "2": "RTS", "3": "EN"}, x=66.0, y=H - 16.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-reset"))
+                      pins={"1": "DTR_R", "2": "RTS", "3": "EN"}, x=66.0, y=H - 16.0, rot=0, lcsc="C2146", mpn="S8050 J3Y (NPN)", desc="Auto-reset"))
         P.append(Part(ref="Q10", symbol="Transistor_BJT:MMBT3904", footprint="Package_TO_SOT_SMD:SOT-23", value="S8050",
-                      pins={"1": "RTS_R", "2": "DTR", "3": "IO0"}, x=70.0, y=H - 16.0, rot=0, lcsc="C2146", mpn="S8050", desc="Auto-boot"))
+                      pins={"1": "RTS_R", "2": "DTR", "3": "IO0"}, x=70.0, y=H - 16.0, rot=0, lcsc="C2146", mpn="S8050 J3Y (NPN)", desc="Auto-boot"))
         P.append(Part(ref="R21", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
                       pins={"1": "DTR", "2": "DTR_R"}, x=66.0, y=H - 12.0, rot=0, lcsc="C25804", desc="Auto-reset base"))
         P.append(Part(ref="R22", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="10k",
@@ -258,11 +258,11 @@ def build_parts() -> List[Part]:
     # LED data level shifter 3.3V -> 5V
     P.append(Part(ref="U5", symbol="74xGxx:74AHCT1G125", footprint="Package_TO_SOT_SMD:SOT-23-5", value="74AHCT1G125",
                   pins={"1": "GND", "2": "IO32", "3": "GND", "4": "LED_DATA_5V", "5": "+5V"},
-                  x=42.0, y=Ys + 9.5, rot=0, lcsc="", mpn="SN74AHCT1G125DBVR", desc="WS2812B data level shifter"))
+                  x=42.0, y=Ys + 9.5, rot=0, lcsc="C7484", mpn="SN74AHCT1G125DBVR", desc="WS2812B data level shifter"))
     P.append(Part(ref="C74", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
                   pins={"1": "+5V", "2": "GND"}, x=46.5, y=Ys + 9.5, rot=90, lcsc="C14663", desc="U5 decoupling"))
     P.append(Part(ref="R23", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="330",
-                  pins={"1": "LED_DATA_5V", "2": "LED_DATA"}, x=38.0, y=Ys + 5.0, rot=0, lcsc="C23138", desc="LED data series"))
+                  pins={"1": "LED_DATA_5V", "2": "LED_DATA"}, x=38.0, y=Ys + 5.0, rot=0, lcsc="C23138", mpn="330R 0603 (verify C23138)", desc="LED data series"))
 
     # Power input: USB-C (5V/3A) + optional external 5V, polyfuse, bulk caps
     P.append(Part(ref="J1", symbol="Connector:USB_C_Receptacle_USB2.0_16P",
@@ -276,8 +276,8 @@ def build_parts() -> List[Part]:
     P.append(Part(ref="R18", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="5.1k",
                   pins={"1": "CC2", "2": "GND"}, x=87.0, y=H - 8.0, rot=0, lcsc="C23186", desc="USB CC2 pull-down"))
     P.append(Part(ref="F1", symbol="Device:Polyfuse", footprint="Fuse:Fuse_1812_4532Metric", value="3A PTC",
-                  pins={"1": "VBUS", "2": "VUSB5" if BATTERY else "+5V"}, x=99.0, y=H - 11.0, rot=90, lcsc="",
-                  mpn="MF-MSMF300-2 / BSMD1812-300", desc="Resettable fuse 3A hold (USB path)"))
+                  pins={"1": "VBUS", "2": "VUSB5" if BATTERY else "+5V"}, x=99.0, y=H - 11.0, rot=90, lcsc="C883162",
+                  mpn="BSMD1812-300-16V (BHFUSE) or ASMD1812-300 C135366", desc="Resettable fuse 3A hold (USB path)"))
     if BATTERY:
         # IP5306: 5 V in -> charges a 1S Li-ion; boosts the battery to 5 V / 2.4 A on VOUT. JP1 selects the bus source.
         P.append(Part(ref="U6", symbol="OpenChess:IP5306", footprint="Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm_ThermalVias",
@@ -285,7 +285,7 @@ def build_parts() -> List[Part]:
                                             "7": "LX", "8": "VBOOST", "9": "GND"},
                       x=232.0, y=H - 16.0, rot=0, lcsc="C181692", mpn="IP5306", desc="Li-ion charger (2.1 A) + 5 V boost (2.4 A), power-bank IC"))
         P.append(Part(ref="L1", symbol="Device:L", footprint="Inductor_SMD:L_Taiyo-Yuden_NR-60xx", value="1uH 4A",
-                      pins={"1": "LX", "2": "BAT"}, x=242.0, y=H - 16.6, rot=0, lcsc="", mpn="NR6028T1R0N / CD63 1uH >=4A",
+                      pins={"1": "LX", "2": "BAT"}, x=242.0, y=H - 16.6, rot=0, lcsc="C96955", mpn="SWPA6045S1R0NT (Sunlord) / CKCS6045-1uH/N C354627 / NR6045T1R0N - check land pattern",
                       desc="Boost inductor 1 uH, >= 4 A sat, 6x6 mm"))
         P.append(Part(ref="C77", symbol="Device:C", footprint="Capacitor_SMD:C_0805_2012Metric", value="22uF",
                       pins={"1": "VUSB5", "2": "GND"}, x=226.3, y=H - 21.5, rot=90, lcsc="C45783", desc="IP5306 VIN cap"))
@@ -297,8 +297,8 @@ def build_parts() -> List[Part]:
                       value="BATTERY", pins={"1": "BAT", "2": "GND"}, x=262.0, y=H - 5.0, rot=0, lcsc="C131337", mpn="B2B-PH-K-S",
                       desc="1S Li-ion / LiPo battery, JST-PH 2.0 mm (+ on pin 1, check your pack!)"))
         P.append(Part(ref="JP1", symbol="Connector_Generic:Conn_01x03", footprint="Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
-                      value="PWR SEL", pins={"1": "VUSB5", "2": "+5V", "3": "VBOOST"}, x=193.46, y=H - 8.5, rot=90, lcsc="C2337",
-                      mpn="1x3 header + jumper", desc="Power select: 1-2 = USB direct (no battery), 2-3 = battery/boost (IP5306)"))
+                      value="PWR SEL", pins={"1": "VUSB5", "2": "+5V", "3": "VBOOST"}, x=193.46, y=H - 8.5, rot=90, lcsc="",
+                      mpn="1x3 pin header 2.54 mm + jumper cap", desc="Power select: 1-2 = USB direct (no battery), 2-3 = battery/boost (IP5306)"))
         P.append(Part(ref="SW3", symbol="Switch:SW_Push", footprint="Button_Switch_SMD:SW_SPST_TL3342", value="PWR",
                       pins={"1": "KEY", "2": "GND"}, x=276.0, y=H - 6.0, rot=0, lcsc="C318884", mpn="TS-1187A-B-A-B",
                       desc="IP5306 KEY: short press = boost on, long press = off"))
@@ -306,10 +306,10 @@ def build_parts() -> List[Part]:
                   value="5V IN", pins={"1": "+5V", "2": "GND"}, x=118.0, y=H - 5.0, rot=0, lcsc="C158012",
                   mpn="B2B-XH-A", desc="External 5V/4A input (optional, bypasses fuse)"))
     P.append(Part(ref="C75", symbol="Device:C_Polarized", footprint="Capacitor_SMD:CP_Elec_8x10", value="470uF 10V",
-                  pins={"1": "+5V", "2": "GND"}, x=104.0, y=H - 20.0, rot=90, lcsc="", mpn="470uF/10V SMD 8x10",
+                  pins={"1": "+5V", "2": "GND"}, x=104.0, y=H - 20.0, rot=90, lcsc="C3341", mpn="RVT1C471M0810 470uF 16V D8xL10 (verify)",
                   desc="5V bulk capacitor"))
     P.append(Part(ref="C76", symbol="Device:C_Polarized", footprint="Capacitor_SMD:CP_Elec_8x10", value="470uF 10V",
-                  pins={"1": "+5V", "2": "GND"}, x=94.0, y=H - 20.0, rot=90, lcsc="", mpn="470uF/10V SMD 8x10",
+                  pins={"1": "+5V", "2": "GND"}, x=94.0, y=H - 20.0, rot=90, lcsc="C3341", mpn="RVT1C471M0810 470uF 16V D8xL10 (verify)",
                   desc="5V bulk capacitor"))
     P.append(Part(ref="DL1", symbol="Device:LED", footprint="LED_SMD:LED_0603_1608Metric", value="PWR",
                   pins={"1": "GND", "2": "PWRLED"}, x=136.0, y=H - 6.0, rot=0, lcsc="C72043", desc="Power LED (green)"))
@@ -321,7 +321,7 @@ def build_parts() -> List[Part]:
                   pins={"1": "SRQ1", "2": "SRQ2", "3": "SRQ3", "4": "SRQ4", "5": "SRQ5", "6": "SRQ6", "7": "SRQ7",
                         "8": "GND", "9": "NC_U4_9", "10": "+5V", "11": "IO14", "12": "IO26", "13": "GND",
                         "14": "IO33", "15": "SRQ0", "16": "+5V"},
-                  x=170.0, y=H - 18.0, rot=90, lcsc="", mpn="SN74HCT595DR / 74HCT595D", desc="Column shift register (HCT = 3.3V-input compatible)"))
+                  x=170.0, y=H - 18.0, rot=90, lcsc="C70468", mpn="74HCT595D,112 (Nexperia)", desc="Column shift register (HCT = 3.3V-input compatible)"))
     P.append(Part(ref="C73", symbol="Device:C", footprint="Capacitor_SMD:C_0603_1608Metric", value="100nF",
                   pins={"1": "+5V", "2": "GND"}, x=170.0, y=H - 10.0, rot=0, lcsc="C14663", desc="U4 decoupling"))
     for f in range(8):
@@ -329,7 +329,7 @@ def build_parts() -> List[Part]:
         qx = cx + COL_DX
         P.append(Part(ref=f"Q{f+1}", symbol="Transistor_BJT:MMBT3906", footprint="Package_TO_SOT_SMD:SOT-23", value="S8550",
                       pins={"1": f"SRQ{f}_R", "2": "+5V", "3": f"COL{f}"}, x=qx, y=Ys + 7.0, rot=90,
-                      lcsc="C2150", mpn="S8550", desc=f"Column {'abcdefgh'[f]} high-side PNP switch", extra=dict(col=f)))
+                      lcsc="C2147", mpn="S8550 2TY (PNP)", desc=f"Column {'abcdefgh'[f]} high-side PNP switch", extra=dict(col=f)))
         P.append(Part(ref=f"R{f+1}", symbol="Device:R", footprint="Resistor_SMD:R_0603_1608Metric", value="1k",
                       pins={"1": f"SRQ{f}", "2": f"SRQ{f}_R"}, x=qx - 0.95, y=Ys + 10.5, rot=90,
                       lcsc="C21190", desc=f"Column {'abcdefgh'[f]} base resistor", extra=dict(col=f)))
