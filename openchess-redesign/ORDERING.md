@@ -31,6 +31,27 @@ Files are in `manufacturing/`:
 | NodeMCU row spacing (nodemcu variant) | design uses 22.86 mm | measure centre-to-centre of the two pin rows on your board; if 25.4 mm set `DEV_ROW_SPACING = 25.4` and rebuild |
 | Placement rotations | CPL follows KiCad's zero-rotation convention | in the JLCPCB preview rotate SOT-23 / SOIC / electrolytics if pin 1 or polarity looks wrong |
 
+### Stock
+
+Live stock cannot be read from the build environment; the last figures seen in
+search snapshots (not live, re-check in the JLCPCB BOM upload step, which
+shows stock per line):
+
+| Part | Snapshot | Fallback if out of stock |
+|---|---|---|
+| HX3144ESO C558880 | listed for JLCPCB assembly, count not shown | JSMSEMI JSM3144 C2900615 or HUAXIN HX3144UA C558879 (SOT-23): same class, **check their SOT-23 pin order** before swapping |
+| 74HCT595D C70468 | not shown | SN74HCT595DR (TI) or 74HCT595PW (TSSOP, needs a footprint change) |
+| SN74AHCT1G125 C7484 | LCSC ~9,600 | 74LVC1G125 C23654 does not translate to 5 V; use 74AHCT1G125 from another brand (e.g. Nexperia 74AHCT1G125GW) |
+| S8550 2TY C2147 | extended part, count not shown | any SOT-23 PNP, 25 V/0.5 A+, pinout B-E-C (MMBT3906 C727097, SS8550 C2147 family) |
+| ESP32-WROOM-32E-N4 C701341 | LCSC 10,501 | ESP32-WROOM-32E-N8 C701342 (same footprint) |
+| BSMD1812-300-16V C883162 | LCSC 32,825 | ASMD1812-300 C135366 |
+| Connectors C165948 / C158012 / C131337 | 100k+ each | any same-family part |
+| TS-1187A-B-A-B C318884 | fluctuates (one snapshot: out of stock) | any 6x6 mm SMD tactile switch (TL3342 footprint), e.g. C318884 siblings TS-1187A-x |
+| 470 uF D8xL10 C3341 | not confirmed | any 470 uF >= 6.3 V D8xL10.2 SMD electrolytic |
+| SWPA6045S1R0NT C96955 / CKCS6045-1uH C354627 | not shown | any 6x6 mm 1 uH >= 4 A shielded inductor whose land pattern fits 1.6 x 5.7 mm pads 4.7 mm apart |
+
+Basic parts (resistors, ceramic caps, S8050, LED) are always in stock.
+
 ## Battery block: fit it or not
 
 The IP5306 block is optional on both variants and the board is fully usable
